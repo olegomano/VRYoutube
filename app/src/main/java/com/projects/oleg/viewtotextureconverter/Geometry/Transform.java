@@ -40,6 +40,14 @@ public class Transform {
 
     }
 
+    public float[] getTransform(){
+        return modelMatrix;
+    }
+
+    public float[] getScale(){
+        return scale;
+    }
+
     public float[] getOrigin() {
         return null;
     }
