@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 
+import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.nio.FloatBuffer;
@@ -58,7 +59,7 @@ public class BitmapSpriteShader extends Shader {
     }
     private float[] mMatrix = new float[16];
     @Override
-    public void draw(float[] camera, float[] modelMatrix, int texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder) {
+    public void draw(float[] camera, float[] modelMatrix, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder) {
         if(modelMatrix == null){
             Matrix.setIdentityM(mMatrix,0);
         }else{
@@ -68,9 +69,14 @@ public class BitmapSpriteShader extends Shader {
         GLES20.glUseProgram(programHandle);
         checkGlError("use program");
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
+        if(texture.getType() != GLES20.GL_TEXTURE_2D){
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, TextureManager.getManager().getErrorTexture().getId());
+            Utils.printError("EROR TEXTURE TYPE MISMATCH");
+        }else {
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture.getId());
+        }
         checkGlError("Bind Texture " + texture);
-        GLES20.glUniform1i(samplerHandle,0);
+        GLES20.glUniform1i(samplerHandle, 0);
         checkGlError("Passed texture");
         GLES20.glEnableVertexAttribArray(vertexHandle);
         checkGlError("Enabled vertex handle");

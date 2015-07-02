@@ -58,34 +58,14 @@ public class MyRenderer implements CardboardView.StereoRenderer {
 
     @Override
     public void onSurfaceCreated(EGLConfig eglConfig) {
+        TextureManager.createSingleton(mContext);
         shader.initShader();
         tstPlane.setShader(shader);
-        tstPlane.setTexture(TextureManager.getManager().createTextureFromReasource(mContext,R.drawable.errorloadingpng,"ERROR").getId());
+        tstPlane.setTexture(TextureManager.getManager().createTextureFromReasource(R.drawable.errorloadingpng,"loading"));
     }
 
     @Override
     public void onRendererShutdown() {
 
-    }
-
-    private int genTexture(int dwb){
-        int[] txture = new int[1];
-        GLES20.glGenTextures(1, txture, 0);
-        if(txture[0] ==-1){
-            Utils.printError("Error creating Texture");
-        }
-        Shader.checkGlError("Created texture");
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, txture[0]);
-        Shader.checkGlError("Bound Texture");
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S,GLES20.GL_REPEAT);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T,GLES20.GL_REPEAT);
-
-        Bitmap bmp = BitmapFactory.decodeResource(mContext.getResources(),R.drawable.errorloadingpng);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D,0,bmp,0);
-        bmp.recycle();
-        return  txture[0];
     }
 }

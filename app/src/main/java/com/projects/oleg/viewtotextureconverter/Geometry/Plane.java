@@ -1,6 +1,7 @@
 package com.projects.oleg.viewtotextureconverter.Geometry;
 
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
+import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.nio.FloatBuffer;
@@ -33,7 +34,7 @@ public class Plane extends Transform {
     private HashMap<String,Object> parameters = new HashMap<>();
 
     private Shader shader;
-    private int texture;
+    private TextureManager.Texture texture;
 
     public Plane(){
         super();
@@ -52,14 +53,17 @@ public class Plane extends Transform {
         shader = s;
     }
 
-    public void setTexture(int txt){
-        Utils.print("Set texture to " + txt);
+    public void setTexture(TextureManager.Texture txt){
+        Utils.print("Set texture to " + txt.getId());
         texture = txt;
     }
 
     public void draw(float[] camera, float[] parent){
+        if(texture == null){
+            texture = TextureManager.getManager().getErrorTexture();
+        }
         if(shader!=null){
-            shader.draw(camera,modelMatrix,texture,vertsBuffer,uvCoordsBuffer,drawOrderBuffer);
+            shader.draw(camera,modelMatrix,texture.getId(),vertsBuffer,uvCoordsBuffer,drawOrderBuffer);
         }
     }
 }

@@ -3,6 +3,7 @@ package com.projects.oleg.viewtotextureconverter.Shader;
 import android.opengl.GLES20;
 import android.util.Log;
 
+import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.nio.FloatBuffer;
@@ -12,7 +13,7 @@ import java.nio.ShortBuffer;
  * Created by momo-chan on 7/1/15.
  */
 public abstract class Shader {
-    public abstract void draw(float[] camera, float[] modelMatrix, int texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder);
+    public abstract void draw(float[] camera, float[] modelMatrix, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder);
     public abstract void initShader(); //happens on GL thread
 
 
