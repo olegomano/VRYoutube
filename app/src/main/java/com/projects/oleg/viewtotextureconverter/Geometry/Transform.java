@@ -25,7 +25,9 @@ public class Transform {
     }
 
     public void scale(float x, float y, float z){
-
+        scale[0]*=x;
+        scale[1]*=y;
+        scale[2]*=z;
     }
 
     public void createBase(float[] forward, float[] right, float[] down) {

@@ -1,6 +1,7 @@
 package com.projects.oleg.viewtotextureconverter;
 
 import android.app.Activity;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,9 +15,10 @@ public class StereoViewActivity extends CardboardActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.setContentView(R.layout.activity_stereo_view);
         cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
-        cardboardView.setRenderer(new MyRenderer());
+        cardboardView.setRenderer(new MyRenderer(this));
         setCardboardView(cardboardView);
     }
 
