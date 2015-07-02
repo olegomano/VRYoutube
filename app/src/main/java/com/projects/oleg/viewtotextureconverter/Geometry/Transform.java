@@ -6,8 +6,8 @@ import android.opengl.Matrix;
  * Created by momo-chan on 7/1/15.
  */
 public class Transform {
-    private float[] modelMatrix = new float[16];
-    private float[] scale = {1,1,1};
+    protected float[] modelMatrix = new float[16];
+    protected float[] scale = {1,1,1};
     private float[] lBuffMat = new float[16];
     private float[] rBuffmat = new float[16];
 
