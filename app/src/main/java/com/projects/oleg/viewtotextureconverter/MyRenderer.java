@@ -14,6 +14,7 @@ import com.google.vrtoolkit.cardboard.Viewport;
 import com.projects.oleg.viewtotextureconverter.Geometry.Plane;
 import com.projects.oleg.viewtotextureconverter.Shader.BitmapSpriteShader;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
+import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
@@ -59,8 +60,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     public void onSurfaceCreated(EGLConfig eglConfig) {
         shader.initShader();
         tstPlane.setShader(shader);
-        errorTexture = genTexture(R.drawable.errorloading);
-        tstPlane.setTexture(errorTexture);
+        tstPlane.setTexture(TextureManager.getManager().createTextureFromReasource(mContext,R.drawable.errorloadingpng,"ERROR").getId());
     }
 
     @Override
