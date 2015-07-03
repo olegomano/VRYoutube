@@ -3,6 +3,7 @@ package com.projects.oleg.viewtotextureconverter.Shader;
 import android.opengl.GLES20;
 import android.util.Log;
 
+import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 import com.projects.oleg.viewtotextureconverter.Utils;
 
@@ -13,10 +14,8 @@ import java.nio.ShortBuffer;
  * Created by momo-chan on 7/1/15.
  */
 public abstract class Shader {
-    public abstract void draw(float[] camera, float[] modelMatrix, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder);
+    public abstract void draw(Camera camera, float[] modelMatrix, float[] scale, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder);
     public abstract void initShader(); //happens on GL thread
-
-
 
     protected int loadShader(int shaderType, String source) {
         int shader = GLES20.glCreateShader(shaderType);
@@ -68,7 +67,7 @@ public abstract class Shader {
     public static void checkGlError(String op) {
         int error;
         while ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
-            Utils.printError(op + "glError " + error);
+            Log.e("GLERROR", op + ": glError " + error);
             throw new RuntimeException(op + ": glError " + error);
         }
     }

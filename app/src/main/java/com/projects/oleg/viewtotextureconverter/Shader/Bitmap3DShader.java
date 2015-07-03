@@ -1,9 +1,6 @@
 package com.projects.oleg.viewtotextureconverter.Shader;
 
-import android.graphics.drawable.shapes.Shape;
 import android.opengl.GLES20;
-import android.opengl.Matrix;
-import android.util.Log;
 
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
@@ -13,11 +10,11 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 /**
- * Created by momo-chan on 7/1/15.
+ * Created by momo-chan on 7/3/15.
  */
-public class BitmapSpriteShader extends Shader {
+public class Bitmap3DShader extends Shader {
     private final String mVertexShader =
-                    "uniform mat4 uMVPMatrix;\n" +
+            "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 cameraMatrix;" +
                     "uniform vec4 scale; " +
                     "attribute vec4 aPosition;\n" +
@@ -34,7 +31,7 @@ public class BitmapSpriteShader extends Shader {
                     "}\n";
 
     private final String mFragmentShader =
-                    "precision mediump float;\n" +
+            "precision mediump float;\n" +
                     "varying vec2 vTextureCoord;\n" +
                     "uniform sampler2D sTexture;\n" +
                     "void main() {\n" +

@@ -1,5 +1,6 @@
 package com.projects.oleg.viewtotextureconverter.Geometry;
 
+import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 import com.projects.oleg.viewtotextureconverter.Utils;
@@ -19,10 +20,10 @@ public class Plane extends Transform {
                              1,-1,0,1, //rb
     };
     private float[] uvCoords = {
-                             0,0, //lb
-                             0,1, //lt
-                             1,1, //rt
-                             1,0, //rb
+                             1,1, //lb
+                             1,0, //lt
+                             0,0, //rt
+                             0,1, //rb
     };
 
     private short[] drawOrder = {0,1,2,0,2,3};
@@ -58,12 +59,12 @@ public class Plane extends Transform {
         texture = txt;
     }
 
-    public void draw(float[] camera, float[] parent){
+    public void draw(Camera camera, float[] parent){
         if(texture == null){
             texture = TextureManager.getManager().getErrorTexture();
         }
         if(shader!=null){
-            shader.draw(camera,modelMatrix,texture.getId(),vertsBuffer,uvCoordsBuffer,drawOrderBuffer);
+            shader.draw(camera,modelMatrix,scale,texture,vertsBuffer,uvCoordsBuffer,drawOrderBuffer);
         }
     }
 }
