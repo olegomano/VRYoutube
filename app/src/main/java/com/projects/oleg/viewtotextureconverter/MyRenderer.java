@@ -13,6 +13,7 @@ import com.google.vrtoolkit.cardboard.HeadTransform;
 import com.google.vrtoolkit.cardboard.Viewport;
 import com.projects.oleg.viewtotextureconverter.Geometry.Plane;
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
+import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.BitmapSpriteShader;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
@@ -26,8 +27,9 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private Context mContext;
 
     private Camera camera = new Camera();
+    private Camera eyeCamera = new Camera();
 
-    private BitmapSpriteShader shader = new BitmapSpriteShader();
+    private Bitmap3DShader shader = new Bitmap3DShader();
     private Plane tstPlane = new Plane();
 
 
@@ -46,12 +48,13 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     public void onDrawEye(Eye eye) {
         GLES20.glClearColor(1, 0, 0, 0);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
+
         dx+=increment;
         if(dx < -1 || dx > 1){
             increment*=-1;
         }
-        tstPlane.displace(increment,0,0);
-        tstPlane.draw(camera,null);
+        tstPlane.displace(increment, 0, 0);
+        tstPlane.draw(camera, null);
     }
 
     @Override

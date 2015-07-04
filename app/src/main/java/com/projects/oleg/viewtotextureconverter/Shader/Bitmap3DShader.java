@@ -14,8 +14,9 @@ import java.nio.ShortBuffer;
  */
 public class Bitmap3DShader extends Shader {
     private final String mVertexShader =
-            "uniform mat4 uMVPMatrix;\n" +
+                    "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 cameraMatrix;" +
+                    "uniform vec4 perspective;"+  // near far ratio constant
                     "uniform vec4 scale; " +
                     "attribute vec4 aPosition;\n" +
                     "attribute vec2 aTextureCoord;\n" +
@@ -27,11 +28,12 @@ public class Bitmap3DShader extends Shader {
                     "  scaledPos.z = scale.z * aPosition.z;"+
                     "  gl_Position =  uMVPMatrix * scaledPos;\n " +
                     "  gl_Position =  cameraMatrix * gl_Position; " +
+                    "  gl_Position.z = gl_Position.z * perspective.x;"+
                     "  vTextureCoord = aTextureCoord;\n" +
                     "}\n";
 
     private final String mFragmentShader =
-            "precision mediump float;\n" +
+                    "precision mediump float;\n" +
                     "varying vec2 vTextureCoord;\n" +
                     "uniform sampler2D sTexture;\n" +
                     "void main() {\n" +
@@ -46,6 +48,7 @@ public class Bitmap3DShader extends Shader {
     private int samplerHandle;
     private int scaleHandle;
     private int cameraMatrixHandle;
+    private int perspectiveHandle;
 
     @Override
     public void initShader() {
@@ -62,6 +65,7 @@ public class Bitmap3DShader extends Shader {
         samplerHandle = GLES20.glGetUniformLocation(programHandle,"sTexture");
         checkGlError("Got sampler");
         cameraMatrixHandle = GLES20.glGetUniformLocation(programHandle,"cameraMatrix");
+        perspectiveHandle = GLES20.glGetUniformLocation(programHandle,"perspective");
 
     }
 
@@ -94,17 +98,25 @@ public class Bitmap3DShader extends Shader {
         GLES20.glEnableVertexAttribArray(scaleHandle);
         GLES20.glUniform4fv(scaleHandle, 1, scale, 0);
 
+        GLES20.glEnableVertexAttribArray(perspectiveHandle);
+        GLES20.glUniform4fv(perspectiveHandle, 1, camera.getPerspective(), 0);
+
+        checkGlError("Passed perspective");
         GLES20.glUniformMatrix4fv(modelMatrixHandle, 1, false, modelMatrix, 0);
         checkGlError("Passed model mat");
 
-        GLES20.glUniformMatrix4fv(cameraMatrixHandle,1,true,camera.getTransform(),0);
+        GLES20.glUniformMatrix4fv(cameraMatrixHandle, 1, true, camera.getTransform(), 0);
         checkGlError("Passed camera matrix");
+
+
 
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, drawOrder.capacity(), GLES20.GL_UNSIGNED_SHORT, drawOrder);
         checkGlError("Draw");
 
         GLES20.glDisableVertexAttribArray(vertexHandle);
         GLES20.glDisableVertexAttribArray(uvHandle);
+        GLES20.glDisableVertexAttribArray(scaleHandle);
+        GLES20.glDisableVertexAttribArray(perspectiveHandle);
 
 
     }

@@ -91,7 +91,7 @@ public class TextureManager {
         return textures.get(ERROR_TEXTURE);
     }
 
-    public Texture createOESSTexture(){
+    public Texture createOESSTexture() {
         return null;
     }
 

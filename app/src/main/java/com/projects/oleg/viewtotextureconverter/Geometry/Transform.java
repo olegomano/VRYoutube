@@ -102,5 +102,10 @@ public class Transform {
     public float[] getDown() {
         return null;
     }
+
+    public void copyFrom(Transform other){
+        System.arraycopy(other.modelMatrix,0,modelMatrix,0,modelMatrix.length);
+        System.arraycopy(other.scale,0,scale,0,scale.length);
+    }
 }
 
