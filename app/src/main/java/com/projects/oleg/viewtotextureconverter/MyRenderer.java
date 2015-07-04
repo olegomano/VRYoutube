@@ -32,6 +32,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
 
     private Bitmap3DShader shader = new Bitmap3DShader();
     private Plane tstPlane = new Plane();
+    private Plane farPlane = new Plane();
 
 
     public MyRenderer(Context context){
@@ -58,8 +59,13 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         float[] rotMat = new float[16];
         Matrix.setRotateM(rotMat, 0, .5f, 0, 1, 0);
       //  tstPlane.applyTransform(rotMat);
-        camera.applyTransform(rotMat);
-        tstPlane.draw(camera, null);
+      //  camera.applyTransform(rotMat);
+        float[] axis = {1,0,0};
+        tstPlane.rotateAboutPoint(axis,1,tstPlane.getOrigin());
+        eyeCamera.copyFrom(camera);
+        eyeCamera.applyTransform(eye.getEyeView());
+        farPlane.draw(eyeCamera,null);
+        tstPlane.draw(eyeCamera, null);
     }
 
     @Override
@@ -77,10 +83,13 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         TextureManager.createSingleton(mContext);
         shader.initShader();
         tstPlane.setShader(shader);
+        farPlane.setShader(shader);
         tstPlane.setTexture(TextureManager.getManager().createTextureFromReasource(R.drawable.errorloadingpng, "loading"));
+        tstPlane.setTexture(TextureManager.getManager().getErrorTexture());
         tstPlane.scale(1.0f / 9.0f, 1.0f / 16.0f, 1);
         tstPlane.scale(5,5,1);
-        tstPlane.displace( 0,0,1);
+        tstPlane.displace(0, 0, 1);
+        farPlane.displace(0,0,8);
         camera.displace(0,0,0);
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
@@ -88,6 +97,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         Utils.printVec(camera.getForward());
         Utils.print("Plane Origin: ");
         Utils.printVec(tstPlane.getOrigin());
+
 
     }
 
