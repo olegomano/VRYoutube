@@ -13,6 +13,7 @@ import java.nio.ShortBuffer;
  * Created by momo-chan on 7/3/15.
  */
 public class Bitmap3DShader extends Shader {
+    // (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
     private final String mVertexShader =
                     "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 cameraMatrix;" +
@@ -28,7 +29,9 @@ public class Bitmap3DShader extends Shader {
                     "  scaledPos.z = scale.z * aPosition.z;"+
                     "  gl_Position =  uMVPMatrix * scaledPos;\n " +
                     "  gl_Position =  cameraMatrix * gl_Position; " +
-                    "  gl_Position.z = gl_Position.z * perspective.x;"+
+                    "  gl_Position.x = (perspective.w * perspective.z * gl_Position.x) / (perspective.w + gl_Position.z);"+
+                    "  gl_Position.y = (perspective.w * gl_Position.y) / (perspective.w + gl_Position.z);"+
+                    "  gl_Position.z = ( (2.0f*(gl_Position.z - perspective.x))/(perspective.y - perspective.x) ) - 1.0f;"+
                     "  vTextureCoord = aTextureCoord;\n" +
                     "}\n";
 

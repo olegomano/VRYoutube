@@ -67,4 +67,6 @@ public class Plane extends Transform {
             shader.draw(camera,modelMatrix,scale,texture,vertsBuffer,uvCoordsBuffer,drawOrderBuffer);
         }
     }
+
+
 }

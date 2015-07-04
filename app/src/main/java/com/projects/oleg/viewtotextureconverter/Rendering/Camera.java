@@ -21,8 +21,8 @@ public class Camera extends Transform {
     }
 
     public void setNearFar(float near, float far){
-        nfrc[0] = near;
-        nfrc[1] = far;
+      //  nfrc[0] = near;
+      //  nfrc[1] = far;
     }
 
     public float getFov(){

@@ -63,8 +63,15 @@ public class Transform {
 
     }
 
-    public void rotateAboutPoint(float[] axis, float[] point) {
-
+    public void rotateAboutPoint(float[] axis,  float angle, float[] point) {
+        Matrix.setIdentityM(lBuffMat,0);
+        Matrix.translateM(lBuffMat, 0, -point[0], -point[1], -point[2]);
+        applyTransform(lBuffMat);
+        Matrix.setRotateM(lBuffMat, 0, angle, axis[0], axis[1], axis[2]);
+        applyTransform(lBuffMat);
+        Matrix.setIdentityM(lBuffMat, 0);
+        Matrix.translateM(lBuffMat, 0, point[0], point[1], point[2]);
+        applyTransform(lBuffMat);
     }
 
     public float[] getTransform(){
@@ -97,6 +104,10 @@ public class Transform {
             right[i] = modelMatrix[0 + i];
         }
         return right;
+    }
+
+    public void transpose(float[] transposed){
+        Matrix.transposeM(transposed,0,modelMatrix,0);
     }
 
     public float[] getDown() {
