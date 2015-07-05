@@ -6,7 +6,7 @@ import com.projects.oleg.viewtotextureconverter.Geometry.Transform;
  * Created by momo-chan on 7/1/15.
  */
 public class Camera extends Transform {
-    private float[] nfrc = {0,10,1,2}; // near far ratio constant
+    private float[] nfrc = {4.9f,10,1,2}; // near far ratio constant
 
     public float[] getPerspective(){
         return nfrc;
@@ -17,7 +17,8 @@ public class Camera extends Transform {
     }
 
     public void setFov(float angle){
-
+        float hAngle = angle/2;
+        nfrc[3] = (float) (1.0f / (Math.tan(Math.toRadians(hAngle))));
     }
 
     public void setNearFar(float near, float far){

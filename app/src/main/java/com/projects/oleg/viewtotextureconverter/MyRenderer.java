@@ -37,11 +37,9 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
 
-    private Bitmap3DShader shader = new Bitmap3DShader();
     private OES3DShader oesShader= new OES3DShader();
 
     private Plane tstPlane = new Plane();
-    //private VirtualDisplayPlane farPlane = new VirtualDisplayPlane();
     private volatile View[] content;
     private volatile VirtualDisplayPlane[] contentPlanes;
 
@@ -53,37 +51,44 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
+        positionPlanes(5.0f);
     }
 
-    public void positionPlanes(){
-        
+    public void positionPlanes(float rad) {
+        float angle;
+        if(contentPlanes.length == 1){
+            float dx = (float) (rad*Math.cos(Math.toRadians(90)));
+            float dz = (float) (rad*Math.sin(Math.toRadians(90)));
+            contentPlanes[0].displace(dx, 0, dz);
+            contentPlanes[0].lookAt(camera.getOrigin(), camera.getDown());
+            contentPlanes[0].scale(3.7f, 3.7f, 1);
+            return;
+        }
+        angle = 180 / (contentPlanes.length - 1);
+        for (int i = 0; i < contentPlanes.length; i++) {
+            float dx = (float) (rad*Math.cos(Math.toRadians(angle*i)));
+            float dz = (float) (rad*Math.sin(Math.toRadians(angle*i)));
+            contentPlanes[i].displace(dx,0,dz);
+            contentPlanes[i].lookAt(camera.getOrigin(),camera.getDown());
+            contentPlanes[i].scale(3.7f,3.7f,1);
+        }
     }
-
     @Override
     public void onNewFrame(HeadTransform headTransform) {
 
     }
-    private float dx = 0;
-    private float increment = .03f;
+
     @Override
     public void onDrawEye(Eye eye) {
         camera.setRatio((float)eye.getViewport().height / (float)eye.getViewport().width);
         GLES20.glClearColor(1, 0, 0, 0);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
-
-        dx+=increment;
-        if(dx < -1 || dx > 1){
-            increment*=-1;
-        }
-        float[] rotMat = new float[16];
-        Matrix.setRotateM(rotMat, 0, .5f, 0, 1, 0);
-      //  tstPlane.applyTransform(rotMat);
-      //  camera.applyTransform(rotMat);
-        float[] axis = {1,0,0};
-        tstPlane.rotateAboutPoint(axis,1,tstPlane.getOrigin());
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(eye.getEyeView());
-        tstPlane.draw(eyeCamera, null);
+        eyeCamera.setFov(eye.getFov().getLeft() + eye.getFov().getRight());
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i].draw(eyeCamera,null);
+        }
     }
 
     @Override
@@ -99,20 +104,11 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     @Override
     public void onSurfaceCreated(EGLConfig eglConfig) {
         TextureManager.createSingleton(mContext);
-        shader.initShader();
         oesShader.initShader();
-        tstPlane.setShader(shader);
-        tstPlane.setTexture(TextureManager.getManager().createTextureFromReasource(R.drawable.errorloadingpng, "loading"));
-        tstPlane.scale(1.0f / 9.0f, 1.0f / 16.0f, 1);
-        tstPlane.scale(5,5,1);
-        tstPlane.displace(0, 0, 1);
-
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i].setShader(oesShader);
             contentPlanes[i].createDisplay(mContext,content[i],720,720);
         }
-
-
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");
@@ -126,16 +122,5 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     @Override
     public void onRendererShutdown() {
 
-    }
-
-    private WebView createWebView(Context context){
-        WebView wbView = new WebView(context);
-        wbView.setWebViewClient(new WebViewClient() {
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-               return false;
-            }
-        });
-        wbView.loadUrl("https://www.google.com/?gws_rd=ssl");
-        return  wbView;
     }
 }

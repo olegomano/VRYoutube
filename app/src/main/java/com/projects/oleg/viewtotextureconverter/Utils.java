@@ -60,6 +60,18 @@ public class Utils {
         res[3] = 0;
     }
 
+    public static float getMagnitude(float[] v){
+        float mag = v[0]*v[0] + v[1]*v[1] + v[2]*v[2] + v[3]*v[3];
+        return (float) Math.sqrt(mag);
+    }
+
+    public static void normalize(float[] vec){
+        float mag = getMagnitude(vec);
+        for(int i = 0; i < vec.length; i++){
+            vec[i]/=mag;
+        }
+    }
+
     public static float dotProduct(float[] v1, float[] v2){
         return 0;
     }

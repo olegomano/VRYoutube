@@ -20,7 +20,17 @@ public class Transform {
     }
 
     public void lookAt(float[] point, float[] down) {
-
+        float[] newNorm = new float[4];
+        float[] origin = getOrigin();
+        for(int i = 0; i < 4;i++){
+            newNorm[i] = point[i] - origin[i];
+        }
+        Utils.print("Looking at " );
+        Utils.printVec(point);
+        Utils.print("Down ");
+        Utils.printVec(down);
+        Utils.normalize(newNorm);
+        createBase(newNorm, down);
     }
 
     public void applyTransform(float[] transform) {
@@ -41,7 +51,10 @@ public class Transform {
     }
 
     public void createBase(float[] forward, float[] right, float[] down) {
-        Matrix.setIdentityM(modelMatrix,0);
+        //Matrix.setIdentityM(modelMatrix,0);
+        Utils.normalize(forward);
+        Utils.normalize(right);
+        Utils.normalize(down);
         for(int i = 0; i < 4; i++){
             modelMatrix[i + 0] = right[i];
         }
@@ -54,7 +67,10 @@ public class Transform {
     }
 
     public void createBase(float[] forward, float[] down){
-        float[] right = new float[4];
+        float[] right = {0,0,0,0};
+        Utils.print("Creating base: ");
+        Utils.printVec(forward);
+        Utils.printVec(down);
         Utils.crossProduct(forward,down,right);
         createBase(forward,right,down);
     }
@@ -84,35 +100,35 @@ public class Transform {
 
     private float[] origin = new float[4];
     public float[] getOrigin() {
-        for(int i = 0; i < 4;i++){
-            origin[i] = modelMatrix[12 + i];
-        }
+        System.arraycopy(modelMatrix,12,origin,0,4);
         return origin;
     }
 
     private float[] forward = new float[4];
     public float[] getForward() {
-        for(int i = 0; i < 4;i++){
-            forward[i] = modelMatrix[8 + i];
-        }
+        System.arraycopy(modelMatrix,8,forward,0,4);
         return forward;
     }
 
+
+    public float[] down  = new float[4];
+    public float[] getDown() {
+        System.arraycopy(modelMatrix,4,down,0,4);
+        return down;
+    }
+
+
     private float[] right = new float[4];
     public float[] getRight() {
-        for(int i = 0; i < 4;i++){
-            right[i] = modelMatrix[0 + i];
-        }
+        System.arraycopy(modelMatrix,0,right,0,4);
         return right;
     }
+
 
     public void transpose(float[] transposed){
         Matrix.transposeM(transposed,0,modelMatrix,0);
     }
 
-    public float[] getDown() {
-        return null;
-    }
 
     public void copyFrom(Transform other){
         System.arraycopy(other.modelMatrix,0,modelMatrix,0,modelMatrix.length);
