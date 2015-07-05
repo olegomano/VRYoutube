@@ -3,10 +3,12 @@ package com.projects.oleg.viewtotextureconverter.Texture;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
 import com.projects.oleg.viewtotextureconverter.R;
+import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.util.HashMap;
 
@@ -79,6 +81,9 @@ public class TextureManager {
         GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bmp, 0);
         Texture newTexture = new Texture(texture[0],bmp.getWidth(),bmp.getHeight(),GLES20.GL_TEXTURE_2D);
         textures.put(name,newTexture);
+
+        Utils.print("Created texture " + newTexture.getId());
+
         return newTexture;
     }
 
@@ -91,8 +96,23 @@ public class TextureManager {
         return textures.get(ERROR_TEXTURE);
     }
 
-    public Texture createOESSTexture() {
-        return null;
+    public Texture createOESSTexture(String name, int w, int h) {
+        int[] texture = new int[1];
+        GLES20.glGenTextures(1, texture, 0);
+        GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture[0]);
+
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+        Texture newTexture = new Texture(texture[0],w,h, GLES11Ext.GL_TEXTURE_EXTERNAL_OES);
+        textures.put(name,newTexture);
+
+        Utils.print("Created new OES texture " + newTexture.getId());
+
+        return newTexture;
     }
+
+
 
 }

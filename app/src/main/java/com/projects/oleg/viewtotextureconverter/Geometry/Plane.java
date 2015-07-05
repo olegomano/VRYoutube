@@ -13,29 +13,29 @@ import java.util.HashMap;
  * Created by momo-chan on 7/1/15.
  */
 public class Plane extends Transform {
-    private float[] verts = {
+    protected float[] verts = {
                             -1,-1,0,1, //lb
                             -1,1,0,1, // lt
                              1,1,0,1, //rt
                              1,-1,0,1, //rb
     };
-    private float[] uvCoords = {
+    protected float[] uvCoords = {
                              1,1, //lb
                              1,0, //lt
                              0,0, //rt
                              0,1, //rb
     };
 
-    private short[] drawOrder = {0,1,2,0,2,3};
+    protected short[] drawOrder = {0,1,2,0,2,3};
 
-    private FloatBuffer vertsBuffer;
-    private FloatBuffer uvCoordsBuffer;
-    private ShortBuffer drawOrderBuffer;
+    protected FloatBuffer vertsBuffer;
+    protected FloatBuffer uvCoordsBuffer;
+    protected ShortBuffer drawOrderBuffer;
 
-    private HashMap<String,Object> parameters = new HashMap<>();
+    protected HashMap<String,Object> parameters = new HashMap<>();
 
-    private Shader shader;
-    private TextureManager.Texture texture;
+    protected Shader shader;
+    protected TextureManager.Texture texture;
 
     public Plane(){
         super();

@@ -4,18 +4,25 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.hardware.display.VirtualDisplay;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.view.View;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.Eye;
 import com.google.vrtoolkit.cardboard.HeadTransform;
 import com.google.vrtoolkit.cardboard.Viewport;
 import com.projects.oleg.viewtotextureconverter.Geometry.Plane;
+import com.projects.oleg.viewtotextureconverter.Geometry.VirtualDisplayPlane;
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.BitmapSpriteShader;
+import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 
@@ -31,13 +38,25 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private Camera eyeCamera = new Camera();
 
     private Bitmap3DShader shader = new Bitmap3DShader();
+    private OES3DShader oesShader= new OES3DShader();
+
     private Plane tstPlane = new Plane();
-    private Plane farPlane = new Plane();
+    //private VirtualDisplayPlane farPlane = new VirtualDisplayPlane();
+    private volatile View[] content;
+    private volatile VirtualDisplayPlane[] contentPlanes;
 
-
-    public MyRenderer(Context context){
+    public MyRenderer(Context context, View[] content){
         super();
         mContext = context;
+        this.content = content;
+        contentPlanes = new VirtualDisplayPlane[content.length];
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i] = new VirtualDisplayPlane();
+        }
+    }
+
+    public void positionPlanes(){
+        
     }
 
     @Override
@@ -64,7 +83,6 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         tstPlane.rotateAboutPoint(axis,1,tstPlane.getOrigin());
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(eye.getEyeView());
-        farPlane.draw(eyeCamera,null);
         tstPlane.draw(eyeCamera, null);
     }
 
@@ -82,15 +100,19 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     public void onSurfaceCreated(EGLConfig eglConfig) {
         TextureManager.createSingleton(mContext);
         shader.initShader();
+        oesShader.initShader();
         tstPlane.setShader(shader);
-        farPlane.setShader(shader);
         tstPlane.setTexture(TextureManager.getManager().createTextureFromReasource(R.drawable.errorloadingpng, "loading"));
-        tstPlane.setTexture(TextureManager.getManager().getErrorTexture());
         tstPlane.scale(1.0f / 9.0f, 1.0f / 16.0f, 1);
         tstPlane.scale(5,5,1);
         tstPlane.displace(0, 0, 1);
-        farPlane.displace(0,0,8);
-        camera.displace(0,0,0);
+
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i].setShader(oesShader);
+            contentPlanes[i].createDisplay(mContext,content[i],720,720);
+        }
+
+
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");
@@ -104,5 +126,16 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     @Override
     public void onRendererShutdown() {
 
+    }
+
+    private WebView createWebView(Context context){
+        WebView wbView = new WebView(context);
+        wbView.setWebViewClient(new WebViewClient() {
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+               return false;
+            }
+        });
+        wbView.loadUrl("https://www.google.com/?gws_rd=ssl");
+        return  wbView;
     }
 }

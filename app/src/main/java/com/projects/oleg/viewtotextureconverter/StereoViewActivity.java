@@ -5,6 +5,7 @@ import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.google.vrtoolkit.cardboard.CardboardActivity;
 import com.google.vrtoolkit.cardboard.CardboardView;
@@ -17,13 +18,17 @@ public class StereoViewActivity extends CardboardActivity {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.setContentView(R.layout.activity_stereo_view);
-        cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
-        cardboardView.setRenderer(new MyRenderer(this));
-        setCardboardView(cardboardView);
     }
 
     @Override
     public void setContentView(int layoutID){
+
+    }
+
+    public void setConentViews(View[] content){
+        cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
+        cardboardView.setRenderer(new MyRenderer(this,content));
+        setCardboardView(cardboardView);
 
     }
 
