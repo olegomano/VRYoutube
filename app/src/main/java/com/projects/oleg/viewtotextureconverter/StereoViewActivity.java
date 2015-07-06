@@ -23,7 +23,7 @@ public class StereoViewActivity extends CardboardActivity {
         super.onCreate(savedInstanceState);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.setContentView(R.layout.activity_stereo_view);
-        View[] content = new View[3];
+        View[] content = new View[5];
         for(int i = 0; i < content.length; i++){
             content[i] = createWebView(this);
         }

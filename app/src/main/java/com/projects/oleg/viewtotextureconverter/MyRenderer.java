@@ -120,7 +120,10 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
-        eyeCamera.applyTransform(eye.getEyeView());
+        float[] eyeMatrix = new float[16];
+        Matrix.transposeM(eyeMatrix,0,eye.getEyeView(),0);
+        eyeCamera.applyTransform(eyeMatrix);
+        eyeCamera.applyTransform(headTrackTransform);
        // eyeCamera.setFov(eye.getFov().getLeft() + eye.getFov().getRight());
 
         for(int i = 0; i < contentPlanes.length; i++){
