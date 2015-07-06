@@ -8,6 +8,7 @@ import android.hardware.display.VirtualDisplay;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.util.Log;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
@@ -70,7 +71,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         float startX = distance*(contentPlanes.length - 1)/2.0f;
         for (int i = 0; i < contentPlanes.length; i++) {
             float dxL =  -startX + distance*i;
-            float dzL =rad;
+            float dzL =  rad;
             float dx = (float) (rad*Math.cos(Math.toRadians(angle*i)));
             float dz = (float) (rad*Math.sin(Math.toRadians(angle * i)));
             float mx = dx + (dxL - dx)*mag;
@@ -80,8 +81,10 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             //contentPlanes[i].lookAt(camera.getOrigin(), camera.getDown());
             Utils.print("Plane Origin " + i);
             Utils.printVec(contentPlanes[i].getOrigin());
-            contentPlanes[i].scale(16.0f,9.0f, 1);
-            contentPlanes[i].scale(1.0f/3.7f, 1.0f / 3.7f,1);
+            contentPlanes[i].scale(16.0f, 9.0f, 1);
+            contentPlanes[i].scale(1.0f / 3.7f, 1.0f / 3.7f, 1);
+            Utils.print("Plane bounds are");
+            Utils.printMat(contentPlanes[i].getBounds());
         }
     }
     @Override
@@ -101,8 +104,20 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(eye.getEyeView());
         //eyeCamera.setFov(eye.getFov().getLeft() + eye.getFov().getRight());
+        float[] crossProduct = new float[4];
         for(int i = 0; i < contentPlanes.length; i++){
-            contentPlanes[i].draw(eyeCamera,null);
+            float[] bounds = contentPlanes[i].getBounds();
+            boolean skip = false;
+            for(int b = 0; b < 4; b++){
+                float dotProduct = Utils.dotProduct(bounds,4*b,eyeCamera.getForward(),0);
+                if( dotProduct <= 0){
+                    skip = true;
+                    Utils.print("Culling plane " + dotProduct);
+                }
+            }
+            if(!skip) {
+                contentPlanes[i].draw(eyeCamera, null);
+            }
         }
     }
 

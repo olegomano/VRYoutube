@@ -1,5 +1,7 @@
 package com.projects.oleg.viewtotextureconverter.Geometry;
 
+import android.opengl.Matrix;
+
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
@@ -28,6 +30,8 @@ public class Plane extends Transform {
 
     protected short[] drawOrder = {0,1,2,0,2,3};
 
+    protected float[] bounds = new float[16];
+
     protected FloatBuffer vertsBuffer;
     protected FloatBuffer uvCoordsBuffer;
     protected ShortBuffer drawOrderBuffer;
@@ -48,6 +52,13 @@ public class Plane extends Transform {
         vertsBuffer.position(0);
         uvCoordsBuffer.position(0);
         drawOrderBuffer.position(0);
+    }
+
+    public float[] getBounds(){
+        for(int i = 0; i < 4; i++){
+            Matrix.multiplyMV(bounds,i*4,modelMatrix,0,verts,i*4);
+        }
+        return bounds;
     }
 
     public void setShader(Shader s){
