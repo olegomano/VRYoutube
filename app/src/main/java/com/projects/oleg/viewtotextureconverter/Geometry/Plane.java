@@ -20,10 +20,10 @@ public class Plane extends Transform {
                              1,-1,0,1, //rb
     };
     protected float[] uvCoords = {
-                             1,1, //lb
-                             1,0, //lt
-                             0,0, //rt
-                             0,1, //rb
+                             0,1, //lb
+                             0,0, //lt
+                             1,0, //rt
+                             1,1, //rb
     };
 
     protected short[] drawOrder = {0,1,2,0,2,3};
