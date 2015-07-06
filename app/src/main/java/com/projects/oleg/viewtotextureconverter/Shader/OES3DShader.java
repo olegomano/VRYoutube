@@ -23,6 +23,7 @@ public class OES3DShader extends Shader {
                     "attribute vec4 aPosition;\n" +
                     "attribute vec2 aTextureCoord;\n" +
                     "varying vec2 vTextureCoord;\n" +
+                    "varying vec2 vTextureCoordInv;"+
                     "void main() {\n" +
                     "  vec4 scaledPos = vec4(1,1,1,1); "+
                     "  scaledPos.x = scale.x * aPosition.x;"+
@@ -30,19 +31,22 @@ public class OES3DShader extends Shader {
                     "  scaledPos.z = scale.z * aPosition.z;"+
                     "  gl_Position =  uMVPMatrix * scaledPos;\n " +
                     "  gl_Position =  cameraMatrix * gl_Position; " +
+                    "  vTextureCoordInv = vec2(1.0f / gl_Position.z, 1.0f / gl_Position.z);"+
+                    "  vTextureCoord = vec2(aTextureCoord.x / gl_Position.z, aTextureCoord.y / gl_Position.z);\n" +
                     "  gl_Position.x = (perspective.w * perspective.z * gl_Position.x) / (perspective.w + gl_Position.z);"+
                     "  gl_Position.y = (perspective.w * gl_Position.y) / (perspective.w + gl_Position.z);"+
                     "  gl_Position.z = ( (2.0f*(gl_Position.z - perspective.x))/(perspective.y - perspective.x) ) - 1.0f;"+
-                    "  vTextureCoord = aTextureCoord;\n" +
-                    "}\n";
+                     "}\n";
 
     private final String mFragmentShader =
                     "#extension GL_OES_EGL_image_external : require\n"+
                     "precision mediump float;\n" +
                     "varying vec2 vTextureCoord;\n" +
+                    "varying vec2 vTextureCoordInv;"+
                     "uniform samplerExternalOES sTexture;\n" +
                     "void main() {\n" +
-                    "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n" +
+                    "  vec2 reintTxt = vec2(vTextureCoord.x/vTextureCoordInv.x,vTextureCoord.y/vTextureCoordInv.x);"+
+                    "  gl_FragColor = texture2D(sTexture, reintTxt);\n" +
                     "}\n";
 
 
