@@ -37,6 +37,8 @@ public class MyRenderer implements CardboardView.StereoRenderer {
 
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
+    private float[] headTrackTransform = new float[16];
+    private float[] eyeProjection = new float[16];
 
     private OES3DShader oesShader= new OES3DShader();
 
@@ -53,12 +55,12 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
-        positionPlanes(5.0f);
+        positionPlanes(1.95f);
     }
 
     public void positionPlanes(float rad) {
         radius = rad;
-        float mag = .9f;
+        float mag = .57f;
         float angle;
         if(contentPlanes.length == 1){
             float dx = (float) (rad*Math.cos(Math.toRadians(90)));
@@ -68,14 +70,16 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[0].scale(3.7f, 3.7f, 1);
             return;
         }
-        angle = 180 / (contentPlanes.length - 1);
-        float distance = 6f;
-        float startX = distance*(contentPlanes.length - 1)/2.0f;
+        float sum = 90;
+        angle = sum / (contentPlanes.length - 1);
+        float sAngle = (180 - sum) / 2.0f;
+        float scale = 8.425f;
+        float startX = scale*(contentPlanes.length - 1)/2.0f;
         for (int i = 0; i < contentPlanes.length; i++) {
-            float dxL =  -startX + distance*i;
+            float dxL =  -startX + scale*i;
             float dzL =  rad;
-            float dx = (float) (rad*Math.cos(Math.toRadians(angle*i)));
-            float dz = (float) (rad*Math.sin(Math.toRadians(angle * i)));
+            float dx = (float) (rad*Math.cos(Math.toRadians(angle*i + sAngle)));
+            float dz = (float) (rad*Math.sin(Math.toRadians(angle * i + sAngle)));
             float mx = dx + (dxL - dx)*mag;
             float mz = dz + (dzL - dz)*mag;
             contentPlanes[i].displace(mx, 0, mz);
@@ -83,11 +87,15 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             float rotate = -15;
 
             //contentPlanes[i].rotateAboutPoint(axis,rotate - rotate*i,contentPlanes[i].getOrigin());
-            contentPlanes[i].lookAt(camera.getOrigin(),camera.getDown());
+            float[] lookAtPoint = {0,0,-3,1};
+            for(int b = 0; b < lookAtPoint.length; b++){
+                lookAtPoint[b] += camera.getOrigin()[b];
+            }
+            contentPlanes[i].lookAt(lookAtPoint,camera.getDown());
             Utils.print("Plane Origin " + i);
             Utils.printVec(contentPlanes[i].getOrigin());
             contentPlanes[i].scale(16.0f, 9.0f, 1);
-            contentPlanes[i].scale(1.0f /6.3f, 1.0f / 6.3f, 1);
+            contentPlanes[i].scale(1.0f /scale, 1.0f / scale, 1);
             Utils.print("Plane bounds are");
             Utils.printMat(contentPlanes[i].getBounds());
         }
@@ -99,6 +107,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        headTransform.getHeadView(headTrackTransform, 0);
     }
 
     @Override
@@ -110,23 +119,30 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         eyeCamera.copyFrom(camera);
+        eyeCamera.applyTransform(headTrackTransform);
         eyeCamera.applyTransform(eye.getEyeView());
        // eyeCamera.setFov(eye.getFov().getLeft() + eye.getFov().getRight());
-        float[] crossProduct = new float[4];
+
         for(int i = 0; i < contentPlanes.length; i++){
             float[] bounds = contentPlanes[i].getBounds();
             boolean skip = false;
             for(int b = 0; b < 4 ; b++){
+
                 float dotProduct = Utils.dotProduct(bounds,b*4,eyeCamera.getForward(),0) / Utils.getMagnitude(bounds,b*4);
                 Utils.print("Plane "+ i + "Dot product is " + dotProduct);
                 if(dotProduct <= .09f){
                     skip = true;
                 }
+
             }
             if(!skip) {
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
+    }
+
+    public void setStereo(boolean status){
+
     }
 
     @Override
