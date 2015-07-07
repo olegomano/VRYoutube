@@ -79,6 +79,12 @@ public class Transform {
 
     }
 
+    public void setScale(float x, float y, float z){
+        scale[0] = x;
+        scale[1] = y;
+        scale[2] = z;
+    }
+
     public void rotateAboutPoint(float[] axis,  float angle, float[] point) {
         Matrix.setIdentityM(lBuffMat,0);
         Matrix.translateM(lBuffMat, 0, -point[0], -point[1], -point[2]);

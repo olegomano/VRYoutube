@@ -31,11 +31,13 @@ public class OES3DShader extends Shader {
                     "  scaledPos.z = scale.z * aPosition.z;"+
                     "  gl_Position =  uMVPMatrix * scaledPos;\n " +
                     "  gl_Position =  cameraMatrix * gl_Position; " +
+
+                    "  vTextureCoord = vec2( aTextureCoord.x / (gl_Position.z + perspective.w), aTextureCoord.y / (gl_Position.z + perspective.w) );"+
+                    "  vTextureCoordInv = vec2(1.0f/ ( gl_Position.z + perspective.w), 1.0f / (gl_Position.z + perspective.w));"+
+
                     "  gl_Position.x = (perspective.w * perspective.z * gl_Position.x) / (perspective.w + gl_Position.z);"+
                     "  gl_Position.y = (perspective.w * gl_Position.y) / (perspective.w + gl_Position.z);"+
                     "  gl_Position.z = ( (2.0f*(gl_Position.z - perspective.x))/(perspective.y - perspective.x) ) - 1.0f;"+
-                    "  vTextureCoord = aTextureCoord;"+
-                    "  vTextureCoordInv = aTextureCoord;"+
                      "}\n";
 
     private final String mFragmentShader =
@@ -45,7 +47,7 @@ public class OES3DShader extends Shader {
                     "varying vec2 vTextureCoordInv;"+
                     "uniform samplerExternalOES sTexture;\n" +
                     "void main() {\n" +
-                    "  vec2 reintTxt = vec2(vTextureCoord.x,vTextureCoord.y);"+
+                    "  vec2 reintTxt = vec2(vTextureCoord.x / vTextureCoordInv.x ,vTextureCoord.y / vTextureCoordInv.y );"+
                     "  gl_FragColor = texture2D(sTexture, reintTxt);\n" +
                     "}\n";
 

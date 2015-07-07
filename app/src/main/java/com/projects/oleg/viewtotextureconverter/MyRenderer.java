@@ -38,8 +38,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
     private float[] headTrackTransform = new float[16];
-    private float[] eyeProjection = new float[16];
-
+    private volatile boolean stereoRendering = true;
     private OES3DShader oesShader= new OES3DShader();
 
     private Plane tstPlane = new Plane();
@@ -55,12 +54,12 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
-        positionPlanes(1.95f);
+        positionPlanes(3.45f);
     }
 
     public void positionPlanes(float rad) {
         radius = rad;
-        float mag = .57f;
+        float mag = -.27f;
         float angle;
         if(contentPlanes.length == 1){
             float dx = (float) (rad*Math.cos(Math.toRadians(90)));
@@ -73,7 +72,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         float sum = 90;
         angle = sum / (contentPlanes.length - 1);
         float sAngle = (180 - sum) / 2.0f;
-        float scale = 8.425f;
+        float scale = 7.825f;
         float startX = scale*(contentPlanes.length - 1)/2.0f;
         for (int i = 0; i < contentPlanes.length; i++) {
             float dxL =  -startX + scale*i;
@@ -83,11 +82,8 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             float mx = dx + (dxL - dx)*mag;
             float mz = dz + (dzL - dz)*mag;
             contentPlanes[i].displace(mx, 0, mz);
-            float[] axis = {0,1,0,0};
-            float rotate = -15;
-
             //contentPlanes[i].rotateAboutPoint(axis,rotate - rotate*i,contentPlanes[i].getOrigin());
-            float[] lookAtPoint = {0,0,-3,1};
+            float[] lookAtPoint = {0,0,-3f,1};
             for(int b = 0; b < lookAtPoint.length; b++){
                 lookAtPoint[b] += camera.getOrigin()[b];
             }
@@ -95,7 +91,10 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             Utils.print("Plane Origin " + i);
             Utils.printVec(contentPlanes[i].getOrigin());
             contentPlanes[i].scale(16.0f, 9.0f, 1);
-            contentPlanes[i].scale(1.0f /scale, 1.0f / scale, 1);
+            contentPlanes[i].scale( (1.0f ) /scale, (1.0f ) / scale, 1);
+            if(i == contentPlanes.length/2){
+                contentPlanes[i].scale(2,2,1);
+            }
             Utils.print("Plane bounds are");
             Utils.printMat(contentPlanes[i].getBounds());
         }
@@ -120,32 +119,30 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
-        float[] eyeMatrix = new float[16];
-        Matrix.transposeM(eyeMatrix,0,eye.getEyeView(),0);
-        eyeCamera.applyTransform(eyeMatrix);
+        if(stereoRendering) {
+            float[] eyeMatrix = new float[16];
+            Matrix.transposeM(eyeMatrix, 0, eye.getEyeView(), 0);
+            eyeCamera.applyTransform(eyeMatrix);
+        }
         eyeCamera.applyTransform(headTrackTransform);
-       // eyeCamera.setFov(eye.getFov().getLeft() + eye.getFov().getRight());
-
-        for(int i = 0; i < contentPlanes.length; i++){
+        for(int i = 0; i < contentPlanes.length; i++) {
             float[] bounds = contentPlanes[i].getBounds();
             boolean skip = false;
-            for(int b = 0; b < 4 ; b++){
-
-                float dotProduct = Utils.dotProduct(bounds,b*4,eyeCamera.getForward(),0) / Utils.getMagnitude(bounds,b*4);
-                Utils.print("Plane "+ i + "Dot product is " + dotProduct);
-                if(dotProduct <= .09f){
+            for (int b = 0; b < 4; b++) {
+                float dotProduct = Utils.dotProduct(bounds, b * 4, eyeCamera.getForward(), 0) / Utils.getMagnitude(bounds, b * 4);
+                Utils.print("Plane " + i + "Dot product is " + dotProduct);
+                if (dotProduct <= .18f) {
                     skip = true;
                 }
-
             }
-            if(!skip) {
+            if (!skip) {
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
     }
 
     public void setStereo(boolean status){
-
+        stereoRendering = status;
     }
 
     @Override
