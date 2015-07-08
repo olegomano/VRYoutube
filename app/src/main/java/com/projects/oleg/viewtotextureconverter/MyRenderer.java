@@ -25,6 +25,7 @@ import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.BitmapSpriteShader;
 import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
+import com.projects.oleg.viewtotextureconverter.Shader.ShaderManager;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -38,8 +39,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
     private float[] headTrackTransform = new float[16];
-    private volatile boolean stereoRendering = true;
-    private OES3DShader oesShader= new OES3DShader();
+    private volatile boolean stereoRendering = false;
 
     private Plane tstPlane = new Plane();
     private volatile View[] content;
@@ -93,7 +93,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[i].scale(16.0f, 9.0f, 1);
             contentPlanes[i].scale( (1.0f ) /scale, (1.0f ) / scale, 1);
             if(i == contentPlanes.length/2){
-                contentPlanes[i].scale(2,2,1);
+               contentPlanes[i].scale(2,2,1);
             }
             Utils.print("Plane bounds are");
             Utils.printMat(contentPlanes[i].getBounds());
@@ -118,20 +118,36 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         eyeCamera.copyFrom(camera);
-        eyeCamera.applyTransform(headTrackTransform);
+        //eyeCamera.applyTransform(headTrackTransform);
+
+
         if(stereoRendering) {
             float[] eyeMatrix = new float[16];
             Matrix.transposeM(eyeMatrix, 0, eye.getEyeView(), 0);
             eyeCamera.applyTransform(eyeMatrix);
         }
         eyeCamera.applyTransform(headTrackTransform);
+        VirtualDisplayPlane hitPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera);
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i].setContentTxt();
+        }
+        if(hitPlane != null){
+            hitPlane.setLoadTxt();
+        }
         for(int i = 0; i < contentPlanes.length; i++) {
             float[] bounds = contentPlanes[i].getBounds();
+            float[] vecW = new float[4];
+            float[] vecH = new float[4];
+            for(int c = 0; c < 3; c++){
+                vecH[c] = bounds[0 + c] - bounds[4 + c];
+                vecW[c] = bounds[4 + c] - bounds[8 + c];
+            }
+            float width = (Utils.getMagnitude(vecH));
+            float height = (Utils.getMagnitude(vecW));
             boolean skip = false;
             for (int b = 0; b < 4; b++) {
                 float dotProduct = Utils.dotProduct(bounds, b * 4, eyeCamera.getForward(), 0) / Utils.getMagnitude(bounds, b * 4);
-                Utils.print("Plane " + i + "Dot product is " + dotProduct);
-                if (dotProduct <= .18f) {
+                if (dotProduct <= .05f) {
                     skip = true;
                 }
             }
@@ -139,6 +155,52 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
+    }
+
+    public Plane cameraRayTrace(Camera camera){
+        for(int i = 0; i < contentPlanes.length; i++){
+            float top = Utils.dotProduct(contentPlanes[i].getForward(),contentPlanes[i].getOrigin()) - Utils.dotProduct(camera.getOrigin(),contentPlanes[i].getForward());
+            float bottom = Utils.dotProduct(camera.getForward(),contentPlanes[i].getForward());
+            if(bottom == 0){ // vectors are parallel
+                continue;
+            }
+            float scale = top/bottom;
+            float[] intersection = {camera.getForward()[0]*scale,camera.getForward()[1]*scale,camera.getForward()[2]*scale,0};
+            float[] bounds = contentPlanes[i].getBounds();
+            /*
+            for (int c = 0; c < 3; c++){
+                intersection[c] -= bounds[4 + c];
+                if(intersection[c] < 0){
+                    continue;
+                }
+            }
+            */
+            float[] vecW = new float[4];
+            float[] vecH = new float[4];
+            for(int c = 0; c < 3; c++){
+                vecH[c] = bounds[0 + c] - bounds[4 + c];
+                vecW[c] = bounds[4 + c] - bounds[8 + c];
+            }
+            float width = (Utils.getMagnitude(vecH));
+            float height = (Utils.getMagnitude(vecW));
+
+            float[] intersectionPlaneSpace = new float[4];
+            float[] inverseMatrix = new float[16];
+            contentPlanes[i].transpose(inverseMatrix);
+            Matrix.multiplyMV(intersectionPlaneSpace, 0, inverseMatrix, 0, intersection, 0);
+
+
+            //intersectionPlaneSpace[0] = Utils.dotProduct(intersection,camera.getRight())/Utils.getMagnitude(intersection);
+            //intersectionPlaneSpace[1] = Utils.dotProduct(intersection,camera.getDown())/Utils.getMagnitude(intersection);
+            //intersectionPlaneSpace[2] = Utils.dotProduct(intersection,camera.getForward())/Utils.getMagnitude(intersection);
+            if(intersectionPlaneSpace[0] > -width/2 && intersectionPlaneSpace[0] < width/2){
+                if(intersectionPlaneSpace[1] > -height/2 && intersectionPlaneSpace[1] < height/2) {
+                    return contentPlanes[i];
+                }
+            }
+
+        }
+        return null;
     }
 
     public void setStereo(boolean status){
@@ -153,7 +215,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     @Override
     public void onSurfaceChanged(int i, int i1) {
         for(int b = 0; b < contentPlanes.length; b++){
-            contentPlanes[b].setShader(oesShader);
+            contentPlanes[b].setShader(ShaderManager.getManager().getShader(OES3DShader.SHADER_KEY));
             contentPlanes[b].createDisplay(mContext,content[b],960,740);
         }
         Utils.print("Cam origin: ");
@@ -167,7 +229,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     @Override
     public void onSurfaceCreated(EGLConfig eglConfig) {
         TextureManager.createSingleton(mContext);
-        oesShader.initShader();
+        ShaderManager.initalizeManager();
 
     }
 

@@ -15,6 +15,7 @@ import java.nio.ShortBuffer;
  */
 public class OES3DShader extends Shader {
     // (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+    public static String SHADER_KEY = "OES3DShader";
     private final String mVertexShader =
             "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 cameraMatrix;" +
@@ -78,6 +79,11 @@ public class OES3DShader extends Shader {
         cameraMatrixHandle = GLES20.glGetUniformLocation(programHandle,"cameraMatrix");
         perspectiveHandle = GLES20.glGetUniformLocation(programHandle,"perspective");
 
+    }
+
+    @Override
+    public String getKey() {
+        return SHADER_KEY;
     }
 
     @Override

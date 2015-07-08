@@ -15,20 +15,20 @@ import java.util.HashMap;
  * Created by momo-chan on 7/1/15.
  */
 public class Plane extends Transform {
-    protected float[] verts = {
+    protected final float[] verts = {
                             -1,-1,0,1, //lb
                             -1,1,0,1, // lt
                              1,1,0,1, //rt
                              1,-1,0,1, //rb
     };
-    protected float[] uvCoords = {
+    protected final float[] uvCoords = {
                              0,1, //lb
                              0,0, //lt
                              1,0, //rt
                              1,1, //rb
     };
 
-    protected short[] drawOrder = {0,1,2,0,2,3};
+    protected final short[] drawOrder = {0,1,2,0,2,3};
 
     protected float[] bounds = new float[16];
 
@@ -53,10 +53,16 @@ public class Plane extends Transform {
         uvCoordsBuffer.position(0);
         drawOrderBuffer.position(0);
     }
-
+    private float[] scaledVerts = new float[16];
     public float[] getBounds(){
+        for(int i = 0; i < 16; i+=4){
+            scaledVerts[i + 0] = scale[0]*verts[i + 0];
+            scaledVerts[i + 1] = scale[1]*verts[i + 1];
+            scaledVerts[i + 2] = scale[2]*verts[i + 2];
+            scaledVerts[i + 3] =          verts[i + 3];
+        }
         for(int i = 0; i < 4; i++){
-            Matrix.multiplyMV(bounds,i*4,modelMatrix,0,verts,i*4);
+            Matrix.multiplyMV(bounds,i*4,modelMatrix,0,scaledVerts,i*4);
         }
         return bounds;
     }

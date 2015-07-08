@@ -14,6 +14,8 @@ import java.nio.ShortBuffer;
  */
 public class Bitmap3DShader extends Shader {
     // (((OldValue - OldMin) * (NewMax - NewMin)) / (OldMax - OldMin)) + NewMin
+    public static String SHADER_KEY = "BMP3DSHADER";
+
     private final String mVertexShader =
                     "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 cameraMatrix;" +
@@ -32,8 +34,8 @@ public class Bitmap3DShader extends Shader {
                     "  gl_Position =  cameraMatrix * gl_Position; " +
 
                   //  "  vTextureCoord = vec2( (aTextureCoord.x) / (gl_Position.z + perspective.w) , (aTextureCoord.y) / (gl_Position.z + perspective.w));\n" +
-                    "    vTextureCoord = vec3(aTextureCoord.x,aTextureCoord.y, gl_Position.z);"+
-                    "  vTextureCoordInv = vec2(1.0f / (gl_Position.z), 1.0f / (gl_Position.z));"+
+                    "    vTextureCoord = vec3(aTextureCoord.x / (perspective.w + gl_Position.z),aTextureCoord.y / (perspective.w + gl_Position.z), gl_Position.z);"+
+                    "  vTextureCoordInv = vec2(1.0f / (perspective.w + gl_Position.z), 1.0f / (perspective.w + gl_Position.z) );"+
 
                     "  gl_Position.x = (perspective.w * perspective.z * gl_Position.x) / (perspective.w + gl_Position.z);"+
                     "  gl_Position.y = (perspective.w * gl_Position.y) / (perspective.w + gl_Position.z);"+
@@ -47,7 +49,7 @@ public class Bitmap3DShader extends Shader {
                     "uniform sampler2D sTexture;\n" +
                     "void main() {\n" +
                     "  vec2 txtCoords = vec2(vTextureCoord.x / vTextureCoordInv.x, vTextureCoord.y / vTextureCoordInv.y); "+
-                    "  gl_FragColor = texture2DProj(sTexture, vTextureCoord);\n" +
+                    "  gl_FragColor = texture2D(sTexture, txtCoords);\n" +
                     "}\n";
 
 
@@ -77,6 +79,11 @@ public class Bitmap3DShader extends Shader {
         cameraMatrixHandle = GLES20.glGetUniformLocation(programHandle,"cameraMatrix");
         perspectiveHandle = GLES20.glGetUniformLocation(programHandle,"perspective");
 
+    }
+
+    @Override
+    public String getKey() {
+        return SHADER_KEY;
     }
 
     @Override

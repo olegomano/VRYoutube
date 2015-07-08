@@ -16,7 +16,7 @@ import java.nio.ShortBuffer;
 public abstract class Shader {
     public abstract void draw(Camera camera, float[] modelMatrix, float[] scale, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder);
     public abstract void initShader(); //happens on GL thread
-
+    public abstract String getKey();
     protected int loadShader(int shaderType, String source) {
         int shader = GLES20.glCreateShader(shaderType);
         if (shader != 0) {

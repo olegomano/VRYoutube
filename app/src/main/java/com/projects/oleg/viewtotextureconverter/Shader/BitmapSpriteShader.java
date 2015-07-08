@@ -16,6 +16,7 @@ import java.nio.ShortBuffer;
  * Created by momo-chan on 7/1/15.
  */
 public class BitmapSpriteShader extends Shader {
+    public static String SHADER_KEY = "BMPSPRITESHADER";
     private final String mVertexShader =
                     "uniform mat4 uMVPMatrix;\n" +
                     "uniform mat4 cameraMatrix;" +
@@ -66,6 +67,11 @@ public class BitmapSpriteShader extends Shader {
         checkGlError("Got sampler");
         cameraMatrixHandle = GLES20.glGetUniformLocation(programHandle,"cameraMatrix");
 
+    }
+
+    @Override
+    public String getKey() {
+        return SHADER_KEY;
     }
 
     @Override
