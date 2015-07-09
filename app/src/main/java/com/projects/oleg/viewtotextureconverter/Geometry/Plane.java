@@ -72,7 +72,7 @@ public class Plane extends Transform {
     }
 
     public void setTexture(TextureManager.Texture txt){
-        Utils.print("Set texture to " + txt.getId());
+        //Utils.print("Set texture to " + txt.getId());
         texture = txt;
     }
 

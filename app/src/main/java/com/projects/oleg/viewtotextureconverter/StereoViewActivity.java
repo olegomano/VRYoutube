@@ -47,6 +47,7 @@ public class StereoViewActivity extends CardboardActivity {
             }
         });
         setCardboardView(cardboardView);
+        cardboardView.setVRModeEnabled(true);
     }
 
     private WebView createWebView(Context context){

@@ -38,6 +38,11 @@ public class Transform {
         Matrix.multiplyMM(modelMatrix, 0, transform, 0, rBuffmat, 0);
     }
 
+    public void postMultiplyTransform(float[] transform){
+        System.arraycopy(modelMatrix,0,lBuffMat,0,modelMatrix.length);
+        Matrix.multiplyMM(modelMatrix,0,lBuffMat,0,transform,0);
+    }
+
     public void displace(float x, float y, float z){
         Matrix.setIdentityM(lBuffMat,0);
         Matrix.translateM(lBuffMat, 0, x, y, z);
