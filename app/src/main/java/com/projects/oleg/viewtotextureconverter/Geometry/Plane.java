@@ -81,9 +81,12 @@ public class Plane extends Transform {
             texture = TextureManager.getManager().getErrorTexture();
         }
         if(shader!=null){
-            shader.draw(camera,modelMatrix,scale,texture,vertsBuffer,uvCoordsBuffer,drawOrderBuffer);
+            shader.draw(camera,modelMatrix,scale,texture,vertsBuffer,uvCoordsBuffer,drawOrderBuffer,parameters);
         }
     }
 
+    public void putParam(String key, Object data){
+        parameters.put(key,data);
+    }
 
 }

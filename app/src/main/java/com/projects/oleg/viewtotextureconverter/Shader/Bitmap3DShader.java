@@ -8,6 +8,7 @@ import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.HashMap;
 
 /**
  * Created by momo-chan on 7/3/15.
@@ -87,7 +88,7 @@ public class Bitmap3DShader extends Shader {
     }
 
     @Override
-    public void draw(Camera camera, float[] modelMatrix, float[] scale, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder) {
+    public void draw(Camera camera, float[] modelMatrix, float[] scale, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder, HashMap params) {
         GLES20.glUseProgram(programHandle);
         checkGlError("use program");
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);

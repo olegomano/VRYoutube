@@ -23,6 +23,7 @@ import com.projects.oleg.viewtotextureconverter.Geometry.VirtualDisplayPlane;
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.BitmapSpriteShader;
+import com.projects.oleg.viewtotextureconverter.Shader.OES3DRayTraceShader;
 import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Shader.ShaderManager;
@@ -39,9 +40,11 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
     private float[] headTrackTransform = new float[16];
-    private volatile boolean stereoRendering = false;
+    private float[] eyeTransform = new float[16];
+    private volatile boolean stereoRendering = true;
 
     private Plane tstPlane = new Plane();
+
     private volatile View[] content;
     private volatile VirtualDisplayPlane[] contentPlanes;
     private float radius;
@@ -82,7 +85,6 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             float mx = dx + (dxL - dx)*mag;
             float mz = dz + (dzL - dz)*mag;
             contentPlanes[i].displace(mx, 0, mz);
-            //contentPlanes[i].rotateAboutPoint(axis,rotate - rotate*i,contentPlanes[i].getOrigin());
             float[] lookAtPoint = {0,0,-3f,1};
             for(int b = 0; b < lookAtPoint.length; b++){
                 lookAtPoint[b] += camera.getOrigin()[b];
@@ -93,7 +95,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[i].scale(16.0f, 9.0f, 1);
             contentPlanes[i].scale( (1.0f ) /scale, (1.0f ) / scale, 1);
             if(i == contentPlanes.length/2){
-               contentPlanes[i].scale(2,2,1);
+           //    contentPlanes[i].scale(2,2,1);
             }
             Utils.print("Plane bounds are");
             Utils.printMat(contentPlanes[i].getBounds());
@@ -107,6 +109,20 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             e.printStackTrace();
         }
         headTransform.getHeadView(headTrackTransform, 0);
+        eyeCamera.copyFrom(camera);
+        eyeCamera.applyTransform(headTrackTransform);
+
+        float[] rayTraceRes = new float[2];
+        VirtualDisplayPlane hitPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceRes);
+
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i].setContentTxt();
+        }
+        if(hitPlane != null){
+            hitPlane.setShader(ShaderManager.getManager().getShader(OES3DRayTraceShader.SHADER_KEY));
+            hitPlane.putParam(OES3DRayTraceShader.RAY_COORD_KEY,rayTraceRes);
+        }
+
     }
 
     @Override
@@ -118,32 +134,15 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         eyeCamera.copyFrom(camera);
-        //eyeCamera.applyTransform(headTrackTransform);
-
-
         if(stereoRendering) {
-            float[] eyeMatrix = new float[16];
-            Matrix.transposeM(eyeMatrix, 0, eye.getEyeView(), 0);
-            eyeCamera.applyTransform(eyeMatrix);
+            Matrix.transposeM(eyeTransform, 0, eye.getEyeView(), 0);
+            //eyeCamera.applyTransform(eyeTransform);
+            //eyeCamera.applyTransform(headTrackTransform);
+
         }
         eyeCamera.applyTransform(headTrackTransform);
-        VirtualDisplayPlane hitPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera);
-        for(int i = 0; i < contentPlanes.length; i++){
-            contentPlanes[i].setContentTxt();
-        }
-        if(hitPlane != null){
-            hitPlane.setLoadTxt();
-        }
         for(int i = 0; i < contentPlanes.length; i++) {
             float[] bounds = contentPlanes[i].getBounds();
-            float[] vecW = new float[4];
-            float[] vecH = new float[4];
-            for(int c = 0; c < 3; c++){
-                vecH[c] = bounds[0 + c] - bounds[4 + c];
-                vecW[c] = bounds[4 + c] - bounds[8 + c];
-            }
-            float width = (Utils.getMagnitude(vecH));
-            float height = (Utils.getMagnitude(vecW));
             boolean skip = false;
             for (int b = 0; b < 4; b++) {
                 float dotProduct = Utils.dotProduct(bounds, b * 4, eyeCamera.getForward(), 0) / Utils.getMagnitude(bounds, b * 4);
@@ -155,9 +154,10 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
+        tstPlane.draw(eyeCamera,null);
     }
 
-    public Plane cameraRayTrace(Camera camera){
+    public Plane cameraRayTrace(Camera camera, float[] intrs){
         for(int i = 0; i < contentPlanes.length; i++){
             float top = Utils.dotProduct(contentPlanes[i].getForward(),contentPlanes[i].getOrigin()) - Utils.dotProduct(camera.getOrigin(),contentPlanes[i].getForward());
             float bottom = Utils.dotProduct(camera.getForward(),contentPlanes[i].getForward());
@@ -166,41 +166,40 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             }
             float scale = top/bottom;
             float[] intersection = {camera.getForward()[0]*scale,camera.getForward()[1]*scale,camera.getForward()[2]*scale,0};
-            float[] bounds = contentPlanes[i].getBounds();
-            /*
-            for (int c = 0; c < 3; c++){
-                intersection[c] -= bounds[4 + c];
-                if(intersection[c] < 0){
-                    continue;
-                }
-            }
-            */
-            float[] vecW = new float[4];
-            float[] vecH = new float[4];
-            for(int c = 0; c < 3; c++){
-                vecH[c] = bounds[0 + c] - bounds[4 + c];
-                vecW[c] = bounds[4 + c] - bounds[8 + c];
-            }
-            float width = (Utils.getMagnitude(vecH));
-            float height = (Utils.getMagnitude(vecW));
-
             float[] intersectionPlaneSpace = new float[4];
             float[] inverseMatrix = new float[16];
             contentPlanes[i].transpose(inverseMatrix);
             Matrix.multiplyMV(intersectionPlaneSpace, 0, inverseMatrix, 0, intersection, 0);
+            float[] topLeftPlane = {-contentPlanes[i].getScale()[0], contentPlanes[i].getScale()[1]};
+            intersectionPlaneSpace[0] = intersectionPlaneSpace[0] - topLeftPlane[0];
+            intersectionPlaneSpace[1] = -intersectionPlaneSpace[1] + topLeftPlane[1];
 
-
-            //intersectionPlaneSpace[0] = Utils.dotProduct(intersection,camera.getRight())/Utils.getMagnitude(intersection);
-            //intersectionPlaneSpace[1] = Utils.dotProduct(intersection,camera.getDown())/Utils.getMagnitude(intersection);
-            //intersectionPlaneSpace[2] = Utils.dotProduct(intersection,camera.getForward())/Utils.getMagnitude(intersection);
-            if(intersectionPlaneSpace[0] > -width/2 && intersectionPlaneSpace[0] < width/2){
-                if(intersectionPlaneSpace[1] > -height/2 && intersectionPlaneSpace[1] < height/2) {
+            intersectionPlaneSpace[0]/=contentPlanes[i].getScale()[0]*2;
+            intersectionPlaneSpace[1]/=contentPlanes[i].getScale()[1]*2;
+            if(intersectionPlaneSpace[0] < 1 && intersectionPlaneSpace[0] > 0){
+                if(intersectionPlaneSpace[1] < 1 && intersectionPlaneSpace[1] > 0) {
+                    intrs[0] = intersectionPlaneSpace[0];
+                    intrs[1] = intersectionPlaneSpace[1];
+                    tstPlane.setOrigin(intersection);
                     return contentPlanes[i];
                 }
             }
 
         }
         return null;
+    }
+
+    private float convertRange(float number, float oMin, float oMax, float nMin, float nMax){
+        /*
+        OldRange = (OldMax - OldMin)
+        NewRange = (NewMax - NewMin)
+        NewValue = (((OldValue - OldMin) * NewRange) / OldRange) + NewMin
+         */
+        float oldRange = oMax - oMin;
+        float newRange = nMax - nMin;
+        float newValue = (((number - oMin)*newRange)/oldRange) + nMin;
+        return newValue;
+
     }
 
     public void setStereo(boolean status){
@@ -218,6 +217,8 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[b].setShader(ShaderManager.getManager().getShader(OES3DShader.SHADER_KEY));
             contentPlanes[b].createDisplay(mContext,content[b],960,740);
         }
+        tstPlane.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
+        tstPlane.setTexture(TextureManager.getManager().getErrorTexture());
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");

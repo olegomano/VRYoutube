@@ -76,7 +76,7 @@ public class Transform {
     }
 
     public void setOrigin(float[] newOrigin){
-
+        System.arraycopy(newOrigin,0,modelMatrix,12,4);
     }
 
     public void setScale(float x, float y, float z){

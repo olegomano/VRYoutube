@@ -9,12 +9,13 @@ import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.HashMap;
 
 /**
  * Created by momo-chan on 7/1/15.
  */
 public abstract class Shader {
-    public abstract void draw(Camera camera, float[] modelMatrix, float[] scale, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder);
+    public abstract void draw(Camera camera, float[] modelMatrix, float[] scale, TextureManager.Texture texture, FloatBuffer verts, FloatBuffer uv, ShortBuffer drawOrder, HashMap params);
     public abstract void initShader(); //happens on GL thread
     public abstract String getKey();
     protected int loadShader(int shaderType, String source) {
