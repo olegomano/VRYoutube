@@ -43,7 +43,6 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private float[] eyeTransform = new float[16];
     private volatile boolean stereoRendering = false;
 
-    private Plane nearPoint = new Plane();
     private Plane farPoint = new Plane();
 
     private volatile View[] content;
@@ -58,12 +57,12 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
-        positionPlanes(3.45f);
+        positionPlanes(5.45f);
     }
 
     public void positionPlanes(float rad) {
         radius = rad;
-        float mag = 1;
+        float mag = -.35f;
         float angle;
         if(contentPlanes.length == 1){
             float dx = (float) (rad*Math.cos(Math.toRadians(90)));
@@ -76,7 +75,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         float sum = 90;
         angle = sum / (contentPlanes.length - 1);
         float sAngle = (180 - sum) / 2.0f;
-        float scale = 7.825f;
+        float scale = 5.825f;
         float startX = scale*(contentPlanes.length - 1)/2.0f;
         for (int i = 0; i < contentPlanes.length; i++) {
             float dxL =  -startX + scale*i;
@@ -96,7 +95,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[i].scale(16.0f, 9.0f, 1);
             contentPlanes[i].scale( (1.0f ) /scale, (1.0f ) / scale, 1);
             if(i == contentPlanes.length/2){
-           //    contentPlanes[i].scale(2,2,1);
+               contentPlanes[i].scale(1.85f,1.85f,1);
             }
             Utils.print("Plane bounds are");
             Utils.printMat(contentPlanes[i].getBounds());
@@ -140,7 +139,6 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         if(stereoRendering) {
             Matrix.transposeM(eyeTransform, 0, eye.getEyeView(), 0);
             eyeCamera.applyTransform(eye.getEyeView());
-
         }else{
             eyeCamera.applyTransform(headTrackTransform);
         }
@@ -158,7 +156,6 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
-        nearPoint.draw(eyeCamera,null);
         farPoint.draw(eyeCamera,null);
     }
 
@@ -191,10 +188,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                     intrs[0] = intersectionPlaneSpace[0];
                     intrs[1] = intersectionPlaneSpace[1];
                     Utils.print("Looking at plane at pos: " + intrs[0] + ", " + intrs[1]);
-                    nearPoint.setOrigin(intersection);
-                    nearPoint.displace(-intersection[0]/2.0f, -intersection[1]/2.0f, -intersection[2]/2.0f);
                     farPoint.setOrigin(intersection);
-                    nearPoint.lookAt(rayCamera.getOrigin(),rayCamera.getDown());
                     farPoint.lookAt(rayCamera.getOrigin(),rayCamera.getDown());
                     return contentPlanes[i];
                 }
@@ -232,13 +226,9 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[b].setShader(ShaderManager.getManager().getShader(OES3DShader.SHADER_KEY));
             contentPlanes[b].createDisplay(mContext,content[b],960,740);
         }
-        nearPoint.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
-        nearPoint.setTexture(TextureManager.getManager().getErrorTexture());
         farPoint.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
         farPoint.setTexture(TextureManager.getManager().getErrorTexture());
         farPoint.scale(.25f,.25f,1);
-        nearPoint.scale(.1125f,.1125f,1);
-
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");
