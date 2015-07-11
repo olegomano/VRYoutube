@@ -117,7 +117,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc (GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         eyeCamera.copyFrom(camera);
 
         if(stereoRendering) {
@@ -174,6 +174,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                     intrs[1] = intersectionPlaneSpace[1];
                     Utils.print("Looking at plane at pos: " + intrs[0] + ", " + intrs[1]);
                     cursor.setOrigin(intersection);
+                    cursor.displace(cursor.getScale()[0],-cursor.getScale()[1],0);
                     cursor.lookAt(rayCamera.getOrigin(), rayCamera.getDown());
                     cursor.setDraw(true);
                     cursor.setParallel(contentPlanes[i]);
