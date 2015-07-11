@@ -1,18 +1,9 @@
 package com.projects.oleg.viewtotextureconverter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.hardware.display.VirtualDisplay;
 import android.opengl.GLES20;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.util.Log;
 import android.view.View;
-import android.webkit.WebChromeClient;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 
 import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.Eye;
@@ -22,10 +13,7 @@ import com.projects.oleg.viewtotextureconverter.Geometry.Plane;
 import com.projects.oleg.viewtotextureconverter.Geometry.VirtualDisplayPlane;
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
-import com.projects.oleg.viewtotextureconverter.Shader.BitmapSpriteShader;
-import com.projects.oleg.viewtotextureconverter.Shader.OES3DRayTraceShader;
 import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
-import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Shader.ShaderManager;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
 
@@ -35,6 +23,8 @@ import javax.microedition.khronos.egl.EGLConfig;
  * Created by momo-chan on 7/1/15.
  */
 public class MyRenderer implements CardboardView.StereoRenderer {
+    public static final String CURSOR_TEXTURE = "cursor";
+
     private Context mContext;
 
     private Camera camera = new Camera();
@@ -43,11 +33,14 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private float[] eyeTransform = new float[16];
     private volatile boolean stereoRendering = false;
 
-    private Plane farPoint = new Plane();
+    private Plane cursor = new Plane();
 
     private volatile View[] content;
     private volatile VirtualDisplayPlane[] contentPlanes;
     private float radius;
+
+    private float[] rayTraceCoords = new float[2];
+    private VirtualDisplayPlane rayTracedPlane;
 
     public MyRenderer(Context context, View[] content){
         super();
@@ -108,22 +101,11 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        float[] inverse = new float[16];
+        cursor.setDraw(false);
         headTransform.getHeadView(headTrackTransform, 0);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
-
-        float[] rayTraceRes = new float[2];
-        VirtualDisplayPlane hitPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceRes);
-
-        for(int i = 0; i < contentPlanes.length; i++){
-            contentPlanes[i].setContentTxt();
-        }
-        if(hitPlane != null){
-            hitPlane.setShader(ShaderManager.getManager().getShader(OES3DRayTraceShader.SHADER_KEY));
-            hitPlane.putParam(OES3DRayTraceShader.RAY_COORD_KEY,rayTraceRes);
-        }
-
+        rayTracedPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceCoords);
     }
 
     @Override
@@ -134,6 +116,8 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         GLES20.glClearColor(1, 0, 0, 0);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc (GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         eyeCamera.copyFrom(camera);
 
         if(stereoRendering) {
@@ -156,7 +140,8 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
-        farPoint.draw(eyeCamera,null);
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        cursor.draw(eyeCamera, null);
     }
 
 
@@ -188,8 +173,10 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                     intrs[0] = intersectionPlaneSpace[0];
                     intrs[1] = intersectionPlaneSpace[1];
                     Utils.print("Looking at plane at pos: " + intrs[0] + ", " + intrs[1]);
-                    farPoint.setOrigin(intersection);
-                    farPoint.lookAt(rayCamera.getOrigin(),rayCamera.getDown());
+                    cursor.setOrigin(intersection);
+                    cursor.lookAt(rayCamera.getOrigin(), rayCamera.getDown());
+                    cursor.setDraw(true);
+                    cursor.setParallel(contentPlanes[i]);
                     return contentPlanes[i];
                 }
             }
@@ -226,9 +213,9 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[b].setShader(ShaderManager.getManager().getShader(OES3DShader.SHADER_KEY));
             contentPlanes[b].createDisplay(mContext,content[b],960,740);
         }
-        farPoint.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
-        farPoint.setTexture(TextureManager.getManager().getErrorTexture());
-        farPoint.scale(.25f,.25f,1);
+        cursor.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
+        cursor.setTexture(TextureManager.getManager().getTexture(CURSOR_TEXTURE));
+        cursor.scale(.125f, .125f, 1);
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");
@@ -240,6 +227,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     public void onSurfaceCreated(EGLConfig eglConfig) {
         TextureManager.createSingleton(mContext);
         ShaderManager.initalizeManager();
+        TextureManager.getManager().createTextureFromReasource(R.drawable.cursor,CURSOR_TEXTURE);
 
     }
 

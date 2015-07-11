@@ -36,6 +36,8 @@ public class Plane extends Transform {
     protected FloatBuffer uvCoordsBuffer;
     protected ShortBuffer drawOrderBuffer;
 
+    protected boolean drawing = true;
+
     protected HashMap<String,Object> parameters = new HashMap<>();
 
     protected Shader shader;
@@ -53,6 +55,11 @@ public class Plane extends Transform {
         uvCoordsBuffer.position(0);
         drawOrderBuffer.position(0);
     }
+
+    public void setDraw(boolean status){
+        drawing = status;
+    }
+
     private float[] scaledVerts = new float[16];
     public float[] getBounds(){
         for(int i = 0; i < 16; i+=4){
@@ -72,11 +79,12 @@ public class Plane extends Transform {
     }
 
     public void setTexture(TextureManager.Texture txt){
-        //Utils.print("Set texture to " + txt.getId());
         texture = txt;
     }
 
     public void draw(Camera camera, float[] parent){
+        if(!drawing) return;
+
         if(texture == null){
             texture = TextureManager.getManager().getErrorTexture();
         }

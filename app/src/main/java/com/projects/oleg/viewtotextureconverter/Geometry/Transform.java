@@ -33,6 +33,11 @@ public class Transform {
         createBase(newNorm, down);
     }
 
+
+    public void setParallel(Transform other){
+        createBase(other.getForward(),other.getRight(),other.getDown());
+    }
+
     public void applyTransform(float[] transform) {
         System.arraycopy(modelMatrix, 0, rBuffmat, 0, modelMatrix.length);
         Matrix.multiplyMM(modelMatrix, 0, transform, 0, rBuffmat, 0);
@@ -60,15 +65,10 @@ public class Transform {
         Utils.normalize(forward);
         Utils.normalize(right);
         Utils.normalize(down);
-        for(int i = 0; i < 4; i++){
-            modelMatrix[i + 0] = right[i];
-        }
-        for(int i = 0; i < 4; i++){
-            modelMatrix[i + 4] = down[i];
-        }
-        for(int i = 0; i < 4; i++){
-            modelMatrix[i + 8] = forward[i];
-        }
+
+        System.arraycopy(right, 0, modelMatrix, 0, 4);
+        System.arraycopy(down,0,modelMatrix,4,4);
+        System.arraycopy(forward,0,modelMatrix,8,4);
     }
 
     public void createBase(float[] forward, float[] down){
