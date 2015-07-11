@@ -25,10 +25,6 @@ public class Transform {
         for(int i = 0; i < 4;i++){
             newNorm[i] = point[i] - origin[i];
         }
-        Utils.print("Looking at " );
-        Utils.printVec(point);
-        Utils.print("Down ");
-        Utils.printVec(down);
         Utils.normalize(newNorm);
         createBase(newNorm, down);
     }
@@ -73,9 +69,6 @@ public class Transform {
 
     public void createBase(float[] forward, float[] down){
         float[] right = {0,0,0,0};
-        Utils.print("Creating base: ");
-        Utils.printVec(forward);
-        Utils.printVec(down);
         Utils.crossProduct(forward,down,right);
         createBase(forward,right,down);
     }

@@ -3,6 +3,7 @@ package com.projects.oleg.viewtotextureconverter;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.os.Vibrator;
 import android.view.View;
 
 import com.google.vrtoolkit.cardboard.CardboardView;
@@ -22,10 +23,12 @@ import javax.microedition.khronos.egl.EGLConfig;
 /**
  * Created by momo-chan on 7/1/15.
  */
-public class MyRenderer implements CardboardView.StereoRenderer {
+public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActivity.OnMagnetButtonPressedListener {
     public static final String CURSOR_TEXTURE = "cursor";
 
     private Context mContext;
+
+    private Vibrator vibrator;
 
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
@@ -39,11 +42,13 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     private volatile VirtualDisplayPlane[] contentPlanes;
     private float radius;
 
+    private Object rayTraceLock = new Object();
     private float[] rayTraceCoords = new float[2];
     private VirtualDisplayPlane rayTracedPlane;
 
     public MyRenderer(Context context, View[] content){
         super();
+        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
         mContext = context;
         this.content = content;
         contentPlanes = new VirtualDisplayPlane[content.length];
@@ -51,6 +56,17 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             contentPlanes[i] = new VirtualDisplayPlane();
         }
         positionPlanes(5.45f);
+    }
+
+
+    @Override
+    public void onMagnetButtonPressed() {
+        vibrator.vibrate(200);
+        synchronized (rayTraceLock) {
+            if (rayTracedPlane != null) {
+                rayTracedPlane.dispatchTouchEvent(rayTraceCoords[0],rayTraceCoords[1]);
+            }
+        }
     }
 
     public void positionPlanes(float rad) {
@@ -105,7 +121,9 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         headTransform.getHeadView(headTrackTransform, 0);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
-        rayTracedPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceCoords);
+        synchronized (rayTraceLock) {
+            rayTracedPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceCoords);
+        }
     }
 
     @Override
@@ -132,7 +150,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
             boolean skip = false;
             for (int b = 0; b < 4 && !skip; b++) {
                 float dotProduct = Utils.dotProduct(bounds, b * 4, eyeCamera.getForward(), 0) / Utils.getMagnitude(bounds, b * 4);
-                if (dotProduct <= .05f) {
+                if (dotProduct <= .00005f) {
                     skip = true;
                 }
             }
@@ -172,7 +190,6 @@ public class MyRenderer implements CardboardView.StereoRenderer {
                 if(intersectionPlaneSpace[1] < 1 && intersectionPlaneSpace[1] > 0) {
                     intrs[0] = intersectionPlaneSpace[0];
                     intrs[1] = intersectionPlaneSpace[1];
-                    Utils.print("Looking at plane at pos: " + intrs[0] + ", " + intrs[1]);
                     cursor.setOrigin(intersection);
                     cursor.displace(cursor.getScale()[0],-cursor.getScale()[1],0);
                     cursor.lookAt(rayCamera.getOrigin(), rayCamera.getDown());
@@ -221,8 +238,7 @@ public class MyRenderer implements CardboardView.StereoRenderer {
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");
         Utils.printVec(camera.getForward());
-        Utils.print("Plane Origin: ");
-    }
+     }
 
     @Override
     public void onSurfaceCreated(EGLConfig eglConfig) {
@@ -236,4 +252,5 @@ public class MyRenderer implements CardboardView.StereoRenderer {
     public void onRendererShutdown() {
 
     }
+
 }

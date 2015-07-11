@@ -6,7 +6,10 @@ import android.graphics.SurfaceTexture;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.util.DisplayMetrics;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 
@@ -23,12 +26,14 @@ import static android.content.Context.DISPLAY_SERVICE;
  */
 public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrameAvailableListener {
     private static int virtualDisplayCount = 0;
+    private Handler uiThread;
 
     private Surface surface;
     private SurfaceTexture surfaceTexture;
     private VirtualDisplay display;
     private TextureManager.Texture displayTexture;
     private Presentation presentation;
+    private View contentView;
     private String textureName = "VirtualDisplay";
 
     private volatile boolean displayCreated = false;
@@ -41,13 +46,16 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
         displayTexture = TextureManager.getManager().createOESSTexture(textureName,w,h);
         setTexture(displayTexture);
 
+        contentView = content;
         surfaceTexture = new SurfaceTexture(displayTexture.getId());
         surfaceTexture.setDefaultBufferSize(w,h);
         surfaceTexture.setOnFrameAvailableListener(this);
         surface = new Surface(surfaceTexture);
         display = displayManager.createVirtualDisplay(textureName,w,h, DisplayMetrics.DENSITY_DEFAULT,surface,DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY);
 
-        new Handler(context.getMainLooper()).postDelayed(new Runnable() {
+        uiThread = new Handler(context.getMainLooper());
+
+        uiThread.postDelayed(new Runnable() {
             @Override
             public void run() {
                 presentation = new Presentation(context, display.getDisplay());
@@ -60,6 +68,30 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
         } , 15000);
 
 
+    }
+
+    public void dispatchTouchEvent(final float x, final float y){
+        if(contentView != null){
+            uiThread.post(new Runnable() {
+                @Override
+                public void run() {
+                    int xPixels = (int) (x*contentView.getWidth());
+                    int yPixels = (int) (y*contentView.getHeight());
+                    MotionEvent down = MotionEvent.obtain( SystemClock.uptimeMillis(),
+                            SystemClock.uptimeMillis(),
+                            MotionEvent.ACTION_DOWN,
+                            xPixels, yPixels, 0);
+
+                    MotionEvent up = MotionEvent.obtain( SystemClock.uptimeMillis(),
+                            SystemClock.uptimeMillis(),
+                            MotionEvent.ACTION_UP,
+                            xPixels, yPixels, 0);
+                    contentView.dispatchTouchEvent(down);
+                    contentView.dispatchTouchEvent(up);
+
+                }
+            });
+        }
     }
 
     public void setLoadTxt(){
