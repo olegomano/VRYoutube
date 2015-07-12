@@ -104,7 +104,9 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
         setTexture(displayTexture);
     }
 
-
+    public View getContent(){
+        return contentView;
+    }
 
     public void draw(Camera camera, float[] parent){
         synchronized (this){

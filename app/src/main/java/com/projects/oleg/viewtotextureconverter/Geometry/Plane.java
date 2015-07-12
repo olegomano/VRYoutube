@@ -56,6 +56,14 @@ public class Plane extends Transform {
         drawOrderBuffer.position(0);
     }
 
+    public float getWidth(){
+        return scale[0]*2;
+    }
+
+    public float getHeight(){
+        return scale[1]*2;
+    }
+
     public void setDraw(boolean status){
         drawing = status;
     }

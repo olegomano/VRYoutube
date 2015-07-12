@@ -6,7 +6,7 @@ import com.projects.oleg.viewtotextureconverter.Geometry.Transform;
  * Created by momo-chan on 7/1/15.
  */
 public class Camera extends Transform {
-    private float[] nfrc = {.05f,50,1,2.2f}; // near far ratio constant
+    private float[] nfrc = {.05f,50,1,4.1f}; // near far ratio constant
     private float[] nfrcRet = new float[4];
     public synchronized float[] getPerspective(){
         System.arraycopy(nfrc,0,nfrcRet,0,nfrc.length);

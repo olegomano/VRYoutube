@@ -25,16 +25,14 @@ import javax.microedition.khronos.egl.EGLConfig;
  */
 public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActivity.OnMagnetButtonPressedListener {
     public static final String CURSOR_TEXTURE = "cursor";
-
     private Context mContext;
-
     private Vibrator vibrator;
 
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
     private float[] headTrackTransform = new float[16];
     private float[] eyeTransform = new float[16];
-    private volatile boolean stereoRendering = false;
+    private volatile boolean stereoRendering = true;
 
     private Plane cursor = new Plane();
 
@@ -46,6 +44,58 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private float[] rayTraceCoords = new float[2];
     private VirtualDisplayPlane rayTracedPlane;
 
+    public class Scene{
+        private Camera camera = new Camera();
+        private VirtualDisplayPlane[] contentDisplays;
+        private Plane cursor = new Plane();
+
+        public void createScene(Context context, View[] content, int w, int h){
+            contentPlanes = new VirtualDisplayPlane[content.length];
+            for(int i = 0; i < contentPlanes.length; i++){
+                contentPlanes[i].createDisplay(context,content[i],w,h);
+            }
+        }
+
+        public Plane rayTrace(Camera camera, Plane[] set, float[] res){
+            for(int i = 0; i < set.length; i++){
+                float top = Utils.dotProduct(set[i].getForward(),set[i].getOrigin()) - Utils.dotProduct(camera.getOrigin(),set[i].getForward());
+                float bottom = Utils.dotProduct(camera.getForward(),set[i].getForward());
+                if(bottom == 0){ // vectors are parallel
+                    continue;
+                }
+                float scale = top/bottom;
+                if(scale < 0){
+                    continue;
+                }
+                float[] intersection = {camera.getForward()[0]*scale,camera.getForward()[1]*scale,camera.getForward()[2]*scale,1};
+                float[] intersectionPlaneSpace = new float[4];
+                float[] inverseMatrix = new float[16];
+                Matrix.invertM(inverseMatrix,0,contentPlanes[i].getTransform(),0);
+                Matrix.multiplyMV(intersectionPlaneSpace, 0, inverseMatrix, 0, intersection, 0);
+                float[] topLeftPlane = {-set[i].getScale()[0], set[i].getScale()[1]};
+                intersectionPlaneSpace[0] = intersectionPlaneSpace[0] - topLeftPlane[0];
+                intersectionPlaneSpace[1] = -intersectionPlaneSpace[1] + topLeftPlane[1];
+
+                intersectionPlaneSpace[0]/= (set[i].getScale()[0]*2);
+                intersectionPlaneSpace[1]/= (set[i].getScale()[1]*2);
+                if(intersectionPlaneSpace[0] < 1 && intersectionPlaneSpace[0] > 0){
+                    if(intersectionPlaneSpace[1] < 1 && intersectionPlaneSpace[1] > 0) {
+                        res[0] = intersectionPlaneSpace[0];
+                        res[1] = intersectionPlaneSpace[1];
+                        cursor.setOrigin(intersection);
+                        cursor.displace(cursor.getScale()[0],-cursor.getScale()[1],0);
+                        cursor.lookAt(camera.getOrigin(), camera.getDown());
+                        cursor.setDraw(true);
+                        cursor.setParallel(contentPlanes[i]);
+                        return contentPlanes[i];
+                    }
+                }
+
+            }
+            return null;
+        }
+    }
+
     public MyRenderer(Context context, View[] content){
         super();
         vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
@@ -55,7 +105,18 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
-        positionPlanes(5.45f);
+        positionTabs(9.5f);
+    }
+
+    public void positionTabs(float distance){
+        float centerScale = 4.885f;
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i].displace(0,0,distance);
+            contentPlanes[i].scale(9.0f/9.0f,9.0f/16.0f,1);
+        }
+        contentPlanes[1].scale(centerScale,centerScale,1);
+        contentPlanes[0].displace(-contentPlanes[1].getWidth()/2,contentPlanes[1].getHeight()/4,-distance/9.0f);
+        contentPlanes[2].displace(contentPlanes[1].getWidth() / 2, contentPlanes[1].getHeight() / 4, -distance / 9.0f);
     }
 
 
@@ -104,12 +165,13 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             contentPlanes[i].scale(16.0f, 9.0f, 1);
             contentPlanes[i].scale( (1.0f ) /scale, (1.0f ) / scale, 1);
             if(i == contentPlanes.length/2){
-               contentPlanes[i].scale(1.85f,1.85f,1);
+               contentPlanes[i].scale(1.81f,1.81f,1);
             }
             Utils.print("Plane bounds are");
             Utils.printMat(contentPlanes[i].getBounds());
         }
     }
+
     @Override
     public void onNewFrame(HeadTransform headTransform) {
         try {
@@ -124,22 +186,26 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         synchronized (rayTraceLock) {
             rayTracedPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceCoords);
         }
+        if(rayTracedPlane!=null){
+            if(!rayTracedPlane.equals(contentPlanes[1])){
+                rayTracedPlane.setLoadTxt();
+            }
+        }
     }
 
     @Override
     public void onDrawEye(Eye eye) {
-        camera.setRatio((float) eye.getViewport().height / (float) eye.getViewport().width);
+        eye.setProjectionChanged();
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         GLES20.glDepthFunc(GLES20.GL_LEQUAL);
-        GLES20.glClearColor(1, 0, 0, 0);
+        GLES20.glClearColor(0, 0, 0, 0);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClear(GLES20.GL_DEPTH_BUFFER_BIT);
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         eyeCamera.copyFrom(camera);
-
+        eyeCamera.setRatio((float) eye.getViewport().height / (float) eye.getViewport().width);
         if(stereoRendering) {
-            Matrix.transposeM(eyeTransform, 0, eye.getEyeView(), 0);
             eyeCamera.applyTransform(eye.getEyeView());
         }else{
             eyeCamera.applyTransform(headTrackTransform);

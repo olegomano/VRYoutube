@@ -58,12 +58,12 @@ public class StereoViewActivity extends CardboardActivity {
 
     public void setContentViews(View[] content){
         cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
+        cardboardView.setNeckModelEnabled(true);
         renderer = new MyRenderer(this, content);
         setOnMagnetButtonListener(renderer);
         cardboardView.setRenderer(renderer);
         setCardboardView(cardboardView);
-        cardboardView.setVRModeEnabled(true);
-    }
+     }
 
     private WebView createWebView(Context context){
         WebView wbView = new WebView(context);
