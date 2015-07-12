@@ -43,6 +43,8 @@ public class Plane extends Transform {
     protected Shader shader;
     protected TextureManager.Texture texture;
 
+    protected volatile OnRayTraceStatusListener listener;
+
     public Plane(){
         super();
         vertsBuffer = Utils.allocFloatBuffer(verts.length);
@@ -82,12 +84,28 @@ public class Plane extends Transform {
         return bounds;
     }
 
+    public void setRayTraceStatusListener(OnRayTraceStatusListener listener){
+        this.listener = listener;
+    }
+
     public void setShader(Shader s){
         shader = s;
     }
 
     public void setTexture(TextureManager.Texture txt){
         texture = txt;
+    }
+
+    public void onClick(float x, float y){
+        if(listener != null){
+            listener.onClick(x,y);
+        }
+    }
+
+    public void onOver(float x, float y){
+        if(listener != null){
+            listener.onOver(x,y);
+        }
     }
 
     public void draw(Camera camera, float[] parent){
@@ -103,6 +121,11 @@ public class Plane extends Transform {
 
     public void putParam(String key, Object data){
         parameters.put(key,data);
+    }
+
+    public interface OnRayTraceStatusListener{
+        public void onOver(float x, float y);
+        public void onClick(float x, float y);
     }
 
 }

@@ -40,61 +40,15 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private volatile VirtualDisplayPlane[] contentPlanes;
     private float radius;
 
-    private Object rayTraceLock = new Object();
-    private float[] rayTraceCoords = new float[2];
-    private VirtualDisplayPlane rayTracedPlane;
+    private RayTraceResults rayResults = new RayTraceResults();
 
-    public class Scene{
-        private Camera camera = new Camera();
-        private VirtualDisplayPlane[] contentDisplays;
-        private Plane cursor = new Plane();
 
-        public void createScene(Context context, View[] content, int w, int h){
-            contentPlanes = new VirtualDisplayPlane[content.length];
-            for(int i = 0; i < contentPlanes.length; i++){
-                contentPlanes[i].createDisplay(context,content[i],w,h);
-            }
-        }
-
-        public Plane rayTrace(Camera camera, Plane[] set, float[] res){
-            for(int i = 0; i < set.length; i++){
-                float top = Utils.dotProduct(set[i].getForward(),set[i].getOrigin()) - Utils.dotProduct(camera.getOrigin(),set[i].getForward());
-                float bottom = Utils.dotProduct(camera.getForward(),set[i].getForward());
-                if(bottom == 0){ // vectors are parallel
-                    continue;
-                }
-                float scale = top/bottom;
-                if(scale < 0){
-                    continue;
-                }
-                float[] intersection = {camera.getForward()[0]*scale,camera.getForward()[1]*scale,camera.getForward()[2]*scale,1};
-                float[] intersectionPlaneSpace = new float[4];
-                float[] inverseMatrix = new float[16];
-                Matrix.invertM(inverseMatrix,0,contentPlanes[i].getTransform(),0);
-                Matrix.multiplyMV(intersectionPlaneSpace, 0, inverseMatrix, 0, intersection, 0);
-                float[] topLeftPlane = {-set[i].getScale()[0], set[i].getScale()[1]};
-                intersectionPlaneSpace[0] = intersectionPlaneSpace[0] - topLeftPlane[0];
-                intersectionPlaneSpace[1] = -intersectionPlaneSpace[1] + topLeftPlane[1];
-
-                intersectionPlaneSpace[0]/= (set[i].getScale()[0]*2);
-                intersectionPlaneSpace[1]/= (set[i].getScale()[1]*2);
-                if(intersectionPlaneSpace[0] < 1 && intersectionPlaneSpace[0] > 0){
-                    if(intersectionPlaneSpace[1] < 1 && intersectionPlaneSpace[1] > 0) {
-                        res[0] = intersectionPlaneSpace[0];
-                        res[1] = intersectionPlaneSpace[1];
-                        cursor.setOrigin(intersection);
-                        cursor.displace(cursor.getScale()[0],-cursor.getScale()[1],0);
-                        cursor.lookAt(camera.getOrigin(), camera.getDown());
-                        cursor.setDraw(true);
-                        cursor.setParallel(contentPlanes[i]);
-                        return contentPlanes[i];
-                    }
-                }
-
-            }
-            return null;
-        }
+    private class RayTraceResults{
+        VirtualDisplayPlane retPlane;
+        float[] coordsWorldSpace = new float[4];
+        float[] coordsPlaneSpace = new float[2];
     }
+
 
     public MyRenderer(Context context, View[] content){
         super();
@@ -123,9 +77,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     @Override
     public void onMagnetButtonPressed() {
         vibrator.vibrate(200);
-        synchronized (rayTraceLock) {
-            if (rayTracedPlane != null) {
-                rayTracedPlane.dispatchTouchEvent(rayTraceCoords[0],rayTraceCoords[1]);
+        synchronized (rayResults) {
+            if (rayResults.retPlane != null) {
+                rayResults.retPlane.dispatchTouchEvent(rayResults.coordsPlaneSpace[0], rayResults.coordsPlaneSpace[1]);
             }
         }
     }
@@ -183,13 +137,14 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         headTransform.getHeadView(headTrackTransform, 0);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
-        synchronized (rayTraceLock) {
-            rayTracedPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayTraceCoords);
+        synchronized (rayResults) {
+            rayResults.retPlane = (VirtualDisplayPlane) cameraRayTrace(eyeCamera, rayResults.coordsPlaneSpace);
         }
-        if(rayTracedPlane!=null){
-            if(!rayTracedPlane.equals(contentPlanes[1])){
-                rayTracedPlane.setLoadTxt();
-            }
+        if(rayResults.retPlane!=null){
+            cursor.setOrigin(rayResults.coordsWorldSpace);
+            cursor.displace(cursor.getScale()[0], -cursor.getScale()[1], 0);
+            cursor.setDraw(true);
+            cursor.setParallel(rayResults.retPlane);
         }
     }
 
@@ -254,13 +209,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             intersectionPlaneSpace[1]/= (contentPlanes[i].getScale()[1]*2);
             if(intersectionPlaneSpace[0] < 1 && intersectionPlaneSpace[0] > 0){
                 if(intersectionPlaneSpace[1] < 1 && intersectionPlaneSpace[1] > 0) {
+                    rayResults.coordsWorldSpace = intersection;
                     intrs[0] = intersectionPlaneSpace[0];
                     intrs[1] = intersectionPlaneSpace[1];
-                    cursor.setOrigin(intersection);
-                    cursor.displace(cursor.getScale()[0],-cursor.getScale()[1],0);
-                    cursor.lookAt(rayCamera.getOrigin(), rayCamera.getDown());
-                    cursor.setDraw(true);
-                    cursor.setParallel(contentPlanes[i]);
                     return contentPlanes[i];
                 }
             }
