@@ -9,15 +9,20 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.DisplayMetrics;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.webkit.WebView;
 
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.ShaderManager;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
+import com.projects.oleg.viewtotextureconverter.Utils;
+
+import java.util.FormatFlagsConversionMismatchException;
 
 import static android.content.Context.DISPLAY_SERVICE;
 
@@ -66,8 +71,6 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
                 }
             }
         } , 15000);
-
-
     }
 
     public void dispatchTouchEvent(final float x, final float y){
@@ -104,8 +107,47 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
         setTexture(displayTexture);
     }
 
+    public TextureManager.Texture getDisplayTexture(){
+        return displayTexture;
+    }
+
     public View getContent(){
         return contentView;
+    }
+
+    public void swapContent(VirtualDisplayPlane other){
+        if(!displayCreated) return;
+
+        TextureManager.Texture mTexture = displayTexture;
+        Surface mSurface = surface;
+        SurfaceTexture mSurfaceTexture = surfaceTexture;
+        VirtualDisplay mDisplay = display;
+        Presentation mPresentation = presentation;
+        View mView = contentView;
+        String mTextureName = textureName;
+
+        textureName = other.textureName;
+        surface = other.surface;
+        surfaceTexture = other.surfaceTexture;
+        display = other.display;
+        presentation = other.presentation;
+        contentView = other.contentView;
+        textureName = other.textureName;
+        surfaceTexture.setOnFrameAvailableListener(this);
+
+        other.displayTexture = mTexture;
+        other.surface = mSurface;
+        other.surfaceTexture = mSurfaceTexture;
+        other.display = mDisplay;
+        other.presentation = mPresentation;
+        other.contentView = mView;
+        other.textureName = mTextureName;
+        other.surfaceTexture.setOnFrameAvailableListener(other);
+
+
+
+
+
     }
 
     public void draw(Camera camera, float[] parent){

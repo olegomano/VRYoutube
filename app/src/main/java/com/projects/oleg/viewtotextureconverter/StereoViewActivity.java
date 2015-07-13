@@ -19,6 +19,10 @@ import com.google.vrtoolkit.cardboard.sensors.MagnetSensor;
 
 
 public class StereoViewActivity extends CardboardActivity {
+    public static int WEB_VIEW = 0;
+    public static int VIDEO_VIEW = 1;
+    public static int SCROLL_VIEW = 2;
+
     private CardboardView cardboardView;
     private MagnetSensor buttonDetector;
     private OnMagnetButtonPressedListener listener;
@@ -76,9 +80,25 @@ public class StereoViewActivity extends CardboardActivity {
         });
         WebSettings ws = wbView.getSettings();
         ws.setJavaScriptEnabled(true);
-        //ws.setMediaPlaybackRequiresUserGesture(false);
-        //ws.setJavaScriptCanOpenWindowsAutomatically(true);
-        wbView.loadUrl("https://www.youtube.com/watch?v=5NqqfbSE7Sk");
+        ws.setMediaPlaybackRequiresUserGesture(false);
+        ws.setJavaScriptCanOpenWindowsAutomatically(true);
+        ws.setUseWideViewPort(true);
+        //ws.setLoadWithOverviewMode(true);
+        ws.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
+        wbView.loadUrl("https://www.youtube.com");
+        wbView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                Utils.print("View focus has changed " + hasFocus);
+            }
+        });
+
+        wbView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+            public void onSystemUiVisibilityChange(int visibility) {
+                Utils.print("System Ui visibility has changed " + visibility);
+            }
+        });
         return  wbView;
     }
 

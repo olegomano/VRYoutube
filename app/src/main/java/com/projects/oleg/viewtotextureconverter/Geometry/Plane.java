@@ -2,6 +2,7 @@ package com.projects.oleg.viewtotextureconverter.Geometry;
 
 import android.opengl.Matrix;
 
+import com.projects.oleg.viewtotextureconverter.MyRenderer;
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Shader;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
@@ -96,15 +97,15 @@ public class Plane extends Transform {
         texture = txt;
     }
 
-    public void onClick(float x, float y){
+    public void onClick(MyRenderer.RayTraceResults results){
         if(listener != null){
-            listener.onClick(x,y);
+            listener.onClick(results);
         }
     }
 
-    public void onOver(float x, float y){
+    public void onOver(MyRenderer.RayTraceResults results){
         if(listener != null){
-            listener.onOver(x,y);
+            listener.onOver(results);
         }
     }
 
@@ -124,8 +125,8 @@ public class Plane extends Transform {
     }
 
     public interface OnRayTraceStatusListener{
-        public void onOver(float x, float y);
-        public void onClick(float x, float y);
+        public void onOver(MyRenderer.RayTraceResults results);
+        public void onClick(MyRenderer.RayTraceResults results);
     }
 
 }

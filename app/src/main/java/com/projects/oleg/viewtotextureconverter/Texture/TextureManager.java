@@ -43,6 +43,13 @@ public class TextureManager {
             this.type = type;
         }
 
+        public Texture(Texture other){
+            id = other.getId();
+            width = other.getWidth();
+            height = other.getHeight();
+            type = other.getType();
+        }
+
         public int getId(){
             return id;
         }
@@ -58,6 +65,7 @@ public class TextureManager {
         public int getType(){
             return type;
         }
+
     }
     public static String ERROR_TEXTURE = "ERROR_TEXTURE";
     private HashMap<String,Texture> textures = new HashMap<>();
@@ -101,7 +109,7 @@ public class TextureManager {
         GLES20.glGenTextures(1, texture, 0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, texture[0]);
 
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
         GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
