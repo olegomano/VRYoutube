@@ -28,7 +28,8 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     public static final String MIC_TEXTURE = "mic";
     public static final String SCROLL_UP_TEXTURE = "scroll_up_texture";
     public static final String SCROLL_DOWN_TEXTURE = "scroll_down_texture";
-
+    public static final String SCROLL_DOWN_HIGHLIGHT_TEXTURE = "scroll_down_highlight_texture";
+    public static final String SCROLL_UP_HIGHLIGHT_TEXTURE = "scroll_up_highlight_texture";
 
     private Context mContext;
     private Vibrator vibrator;
@@ -70,6 +71,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             public void onOver(RayTraceResults results) {
                 if(centerPlane.getContent() != null) {
                     centerPlane.getContent().scrollBy(0, 10);
+                    scrollDown.setTexture(TextureManager.getManager().getTexture(SCROLL_DOWN_HIGHLIGHT_TEXTURE));
                 }
             }
 
@@ -85,6 +87,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             public void onOver(RayTraceResults results) {
                 if(centerPlane.getContent() != null) {
                     centerPlane.getContent().scrollBy(0, -10);
+                    scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_HIGHLIGHT_TEXTURE));
                 }
             }
 
@@ -140,7 +143,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        cursor.setDraw(false);
+        resetFrame();
         headTransform.getHeadView(headTrackTransform, 0);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
@@ -159,6 +162,12 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             }
         }
 
+    }
+
+    private void resetFrame(){
+        cursor.setDraw(false);
+        scrollDown.setTexture(TextureManager.getManager().getTexture(SCROLL_DOWN_TEXTURE));
+        scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_TEXTURE));
     }
 
     @Override
@@ -281,6 +290,8 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         TextureManager.getManager().createTextureFromReasource(R.drawable.mic,MIC_TEXTURE);
         TextureManager.getManager().createTextureFromReasource(R.drawable.scrolldown,SCROLL_DOWN_TEXTURE);
         TextureManager.getManager().createTextureFromReasource(R.drawable.scrollup,SCROLL_UP_TEXTURE);
+        TextureManager.getManager().createTextureFromReasource(R.drawable.scrolldownhighlight,SCROLL_DOWN_HIGHLIGHT_TEXTURE);
+        TextureManager.getManager().createTextureFromReasource(R.drawable.scrolluphighlight,SCROLL_UP_HIGHLIGHT_TEXTURE);
     }
 
     @Override
