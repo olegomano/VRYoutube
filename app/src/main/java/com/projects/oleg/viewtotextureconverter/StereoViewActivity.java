@@ -16,10 +16,11 @@ import android.webkit.WebViewClient;
 import com.google.vrtoolkit.cardboard.CardboardActivity;
 import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.sensors.MagnetSensor;
+import com.projects.oleg.viewtotextureconverter.Views.BrowserView;
 
 
 public class StereoViewActivity extends CardboardActivity {
-    public static int WEB_VIEW = 0;
+    public static int BROWSER_VIEW = 0;
     public static int VIDEO_VIEW = 1;
     public static int SCROLL_VIEW = 2;
 
@@ -46,7 +47,7 @@ public class StereoViewActivity extends CardboardActivity {
         super.setContentView(R.layout.activity_stereo_view);
         View[] content = new View[3];
         for(int i = 0; i < content.length; i++){
-            content[i] = createWebView(this);
+            content[i] = new BrowserView(this);
         }
         setContentViews(content);
     }
