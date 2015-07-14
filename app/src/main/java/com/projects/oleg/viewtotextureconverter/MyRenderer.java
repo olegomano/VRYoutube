@@ -17,13 +17,14 @@ import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.ShaderManager;
 import com.projects.oleg.viewtotextureconverter.Texture.TextureManager;
+import com.projects.oleg.viewtotextureconverter.Views.BrowserView;
 
 import javax.microedition.khronos.egl.EGLConfig;
 
 /**
  * Created by momo-chan on 7/1/15.
  */
-public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActivity.OnMagnetButtonPressedListener {
+public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActivity.OnMagnetButtonPressedListener, BrowserView.BrowserStatusListener {
     public static final String CURSOR_TEXTURE = "cursor";
     public static final String MIC_TEXTURE = "mic";
     public static final String SCROLL_UP_TEXTURE = "scroll_up_texture";
@@ -65,7 +66,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
-        centerPlane = contentPlanes[1];
+        centerPlane = contentPlanes[0];
         scrollDown.setRayTraceStatusListener(new Plane.OnRayTraceStatusListener() {
             @Override
             public void onOver(RayTraceResults results) {
@@ -99,23 +100,23 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     }
 
     public void positionTabs(float distance){
-        float centerScale = 4.885f;
+        float centerScale = 5.785f;
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i].displace(0, 0, distance);
          //   contentPlanes[i].scale(9.0f/9.0f,9.0f/16.0f,1);
         }
-        contentPlanes[1].scale(centerScale,centerScale,1);
-        voiceButton.displace(contentPlanes[1].getWidth() / 2.8f, contentPlanes[1].getHeight() / 1.7f, distance);
-        voiceButton.scale(.44f, .44f, 1);
-        contentPlanes[0].displace(-contentPlanes[1].getWidth() / 1.75f, contentPlanes[1].getHeight() / 4, -distance / 9.0f);
-        contentPlanes[2].displace(contentPlanes[1].getWidth() / 1.75f, contentPlanes[1].getHeight() / 4, -distance / 9.0f);
-        scrollUp.displace(0, contentPlanes[1].getHeight() / 1.9f, distance * .85f);
-        scrollDown.displace(0, -contentPlanes[1].getHeight() / 1.9f, distance * .85f);
+        centerPlane.scale(centerScale,centerScale,1);
+        voiceButton.scale(.45f,.45f,1);
+        voiceButton.displace(0, 0 , distance/5.0f);
+        scrollUp.displace(0, centerPlane.getHeight() / 1.9f, distance * .85f);
+        scrollDown.displace(0, -centerPlane.getHeight() / 1.9f, distance * .85f);
         scrollUp.scale(.6f,.6f,1);
         scrollDown.scale(.6f,.6f,1);
         float[] lookAt = {0,0,-3.5f,0};
         scrollDown.lookAt(lookAt, camera.getDown());
         scrollUp.lookAt(lookAt, camera.getDown());
+
+        voiceButton.setDraw(false);
     }
 
 
@@ -201,11 +202,28 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
                 contentPlanes[i].draw(eyeCamera, null);
             }
         }
-        voiceButton.draw(eyeCamera, null);
-        scrollDown.draw(eyeCamera,null);
-        scrollUp.draw(eyeCamera,null);
+        synchronized (voiceButton) {
+            voiceButton.draw(eyeCamera, null);
+        }
+        scrollDown.draw(eyeCamera, null);
+        scrollUp.draw(eyeCamera, null);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         cursor.draw(eyeCamera, null);
+    }
+
+
+    @Override
+    public void onRecognitionStarted() {
+        synchronized (voiceButton){
+            voiceButton.setDraw(true);
+        }
+    }
+
+    @Override
+    public void onRecognitoinEnded() {
+        synchronized (voiceButton){
+            voiceButton.setDraw(false);
+        }
     }
 
 
@@ -275,7 +293,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         scrollDown.setTexture(TextureManager.getManager().getTexture(SCROLL_DOWN_TEXTURE));
         scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_TEXTURE));
         cursor.scale(.225f, .225f, 1);
-        positionTabs(14.5f);
+        positionTabs(16.0f);
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
         Utils.print("Cam forward");

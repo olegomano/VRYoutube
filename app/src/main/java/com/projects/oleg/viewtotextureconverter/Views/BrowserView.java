@@ -1,11 +1,7 @@
 package com.projects.oleg.viewtotextureconverter.Views;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,15 +9,9 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.AbsoluteLayout;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
-
-import com.projects.oleg.viewtotextureconverter.R;
-import com.projects.oleg.viewtotextureconverter.Utils;
 
 /**
  * Created by momo-chan on 7/13/15.
@@ -57,6 +47,10 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
     public BrowserView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         createHierarchy();
+    }
+
+    public void setOnBrowserStatusListener(BrowserStatusListener ls){
+        listener = ls;
     }
 
     private void createHierarchy() {
@@ -177,16 +171,16 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
     }
 
     @Override
-    public void onSpeechStarted() {
+    public void onRecognitionStarted() {
         if(listener != null){
-            listener.onVoiceStarted();
+            listener.onRecognitionStarted();
         }
     }
 
     @Override
-    public void onSpeechEnded() {
+    public void onRecognitionEnded() {
         if(listener != null){
-            listener.onVoiceEnded();
+            listener.onRecognitoinEnded();
         }
     }
 
@@ -196,8 +190,7 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
     }
 
     public interface BrowserStatusListener {
-        public void onVoiceStarted();
-
-        public void onVoiceEnded();
+        public void onRecognitionStarted();
+        public void onRecognitoinEnded();
     }
 }

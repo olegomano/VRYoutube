@@ -1,12 +1,8 @@
 package com.projects.oleg.viewtotextureconverter;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.os.Vibrator;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -28,6 +24,7 @@ public class StereoViewActivity extends CardboardActivity {
     private MagnetSensor buttonDetector;
     private OnMagnetButtonPressedListener listener;
     private MyRenderer renderer;
+    private BrowserView browser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +33,7 @@ public class StereoViewActivity extends CardboardActivity {
         buttonDetector.setOnCardboardTriggerListener(new MagnetSensor.OnCardboardTriggerListener() {
             @Override
             public void onCardboardTrigger() {
-                if(listener != null){
+                if (listener != null) {
                     listener.onMagnetButtonPressed();
                 }
             }
@@ -45,10 +42,8 @@ public class StereoViewActivity extends CardboardActivity {
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         super.setContentView(R.layout.activity_stereo_view);
-        View[] content = new View[3];
-        for(int i = 0; i < content.length; i++){
-            content[i] = new BrowserView(this);
-        }
+        this.browser = new BrowserView(this);
+        View[] content = {this.browser};
         setContentViews(content);
     }
 
@@ -67,6 +62,7 @@ public class StereoViewActivity extends CardboardActivity {
         renderer = new MyRenderer(this, content);
         setOnMagnetButtonListener(renderer);
         cardboardView.setRenderer(renderer);
+        browser.setOnBrowserStatusListener(renderer);
         setCardboardView(cardboardView);
      }
 

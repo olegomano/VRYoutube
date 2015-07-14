@@ -7,7 +7,6 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 
@@ -75,15 +74,16 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
     public void onReadyForSpeech(Bundle params) {
         Utils.print("ready for speech");
         ready = true;
+        Utils.print("Speech has started");
+        voiceDetectOn = true;
+        if(listener != null){
+            listener.onRecognitionStarted();
+        }
     }
 
     @Override
     public void onBeginningOfSpeech() {
-        Utils.print("Speech has started");
-        voiceDetectOn = true;
-        if(listener != null){
-            listener.onSpeechStarted();
-        }
+
     }
 
     @Override
@@ -98,16 +98,15 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
 
     @Override
     public void onEndOfSpeech() {
-        Utils.print("Speech has ended");
-        voiceDetectOn = false;
-        if(listener != null){
-            listener.onSpeechEnded();
-        }
+
     }
 
     @Override
     public void onError(int error) {
-
+        voiceDetectOn = false;
+        if(listener != null){
+            listener.onRecognitionEnded();
+        }
     }
 
     @Override
@@ -119,6 +118,12 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
                 listener.onSpeechResult(recogResult.get(0));
                 setText(recogResult.get(0));
             }
+        }
+
+        Utils.print("Speech has ended");
+        voiceDetectOn = false;
+        if(listener != null){
+            listener.onRecognitionEnded();
         }
     }
 
@@ -133,8 +138,8 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
     }
 
     public interface SpeechStatusListener{
-        public void onSpeechStarted();
-        public void onSpeechEnded();
+        public void onRecognitionStarted();
+        public void onRecognitionEnded();
         public void onSpeechResult(String result);
     }
 }
