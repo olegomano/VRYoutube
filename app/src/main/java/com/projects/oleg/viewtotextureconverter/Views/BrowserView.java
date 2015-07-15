@@ -12,6 +12,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.ZoomButtonsController;
 
 /**
  * Created by momo-chan on 7/13/15.
@@ -20,10 +21,17 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
     private LinearLayout topBarParent;
     private Button back;
     private Button forward;
+
+    private LinearLayout zoomCntrlParent;
+    private Button zoomIn;
+    private Button zoomOut;
+
     private VoiceEditText searchBar;
     private String youtubeSearch = "https://www.youtube.com/results?search_query=";
 
+
     private BrowserStatusListener listener;
+    private ZoomListener zoomListener;
 
     private LinearLayout wbViewParent;
     private WebView wbView;
@@ -53,6 +61,10 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         listener = ls;
     }
 
+    public void setZoomListener(ZoomListener zls){
+        zoomListener = zls;
+    }
+
     private void createHierarchy() {
         //this.setWeightSum(1);
         //this.setOrientation(VERTICAL);
@@ -60,7 +72,6 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         createWebView(.86f);
         addView(wbViewParent);
         addView(topBarParent);
-
     }
 
     private void createTopBar(float weight) {
@@ -79,7 +90,7 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         LinearLayout.LayoutParams forwardParams = new LinearLayout.LayoutParams(0, 0);
         LinearLayout.LayoutParams searchParams = new LinearLayout.LayoutParams(0, 0);
 
-        backParams.weight = .15f;
+        backParams.weight = .25f;
         backParams.width = 0;
         backParams.height = LayoutParams.MATCH_PARENT;
 
@@ -87,7 +98,7 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         forwardParams.width = 0;
         forwardParams.height = LayoutParams.MATCH_PARENT;
 
-        searchParams.weight = .7f;
+        searchParams.weight = .65f;
         searchParams.width = 0;
         searchParams.height = LayoutParams.MATCH_PARENT;
 
@@ -95,16 +106,26 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         forward.setLayoutParams(forwardParams);
         searchBar.setLayoutParams(searchParams);
 
+
+
         topBarParent.addView(back);
-        topBarParent.addView(forward);
         topBarParent.addView(searchBar);
-        searchBar.setBackgroundColor(Color.WHITE);
-        topBarParent.setBackgroundColor(Color.LTGRAY);
+        createZoomControlls(.10f);
+        topBarParent.addView(zoomCntrlParent);
+
+        searchBar.setBackgroundColor(Color.argb(255, 120, 120, 217));
+        topBarParent.setBackgroundColor(Color.argb(255, 23, 23, 170));
+
+        searchBar.setHint("Click here to voice search");
+        searchBar.setHintTextColor(Color.argb(255,17,17,131));
+
+
         searchBar.requestFocus();
-        searchBar.setHighlightColor(Color.BLUE);
+        searchBar.setHighlightColor(Color.argb(255,17,17,131));
         searchBar.setResultListener(this);
 
-        back.setText("B");
+
+        back.setText("back");
         forward.setText("F");
 
         back.setOnClickListener(new OnClickListener() {
@@ -121,6 +142,54 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
             public void onClick(View v) {
                 if(wbView.canGoForward()){
                     wbView.goForward();
+                }
+            }
+        });
+    }
+
+    private void createZoomControlls(float weight){
+        zoomCntrlParent = new LinearLayout(getContext());
+        LinearLayout.LayoutParams zoomCntlrParentParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT);
+        zoomCntlrParentParams.weight = weight;
+        zoomCntrlParent.setLayoutParams(zoomCntlrParentParams);
+        zoomCntrlParent.setOrientation(LinearLayout.VERTICAL);
+        zoomCntrlParent.setPadding(0,0,0,0);
+
+        zoomIn = new Button(getContext());
+        zoomOut = new Button(getContext());
+        zoomIn.setPadding(0,0,0,0);
+        zoomOut.setPadding(0,0,0,0);
+        zoomIn.setText("+");
+        zoomOut.setText("-");
+
+        LinearLayout.LayoutParams inParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0);
+        LinearLayout.LayoutParams outParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,0);
+        inParams.weight = .5f;
+        inParams.setMargins(0,0,0,0);
+        outParams.weight = .5f;
+        outParams.setMargins(0,0,0,0);
+
+        zoomIn.setLayoutParams(inParams);
+        zoomOut.setLayoutParams(outParams);
+
+        zoomCntrlParent.addView(zoomIn);
+        zoomCntrlParent.addView(zoomOut);
+
+
+        zoomIn.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(zoomListener != null){
+                    zoomListener.onZoomChanged(1);
+                }
+            }
+        });
+
+        zoomOut.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(zoomListener != null){
+                    zoomListener.onZoomChanged(-1);
                 }
             }
         });
@@ -185,6 +254,20 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
     }
 
     @Override
+    public void onWordStarted() {
+        if(listener != null){
+            listener.onWordStarted();
+        }
+    }
+
+    @Override
+    public void onWordEnded() {
+        if(listener != null){
+            listener.onWordEnded();
+        }
+    }
+
+    @Override
     public void onSpeechResult(String result) {
         wbView.loadUrl(youtubeSearch+result);
     }
@@ -192,5 +275,11 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
     public interface BrowserStatusListener {
         public void onRecognitionStarted();
         public void onRecognitoinEnded();
+        public void onWordStarted();
+        public void onWordEnded();
+    }
+
+    public interface ZoomListener{
+        public void onZoomChanged(float dz);
     }
 }

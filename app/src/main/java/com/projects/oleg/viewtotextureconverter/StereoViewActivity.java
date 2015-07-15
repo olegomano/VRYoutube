@@ -3,6 +3,7 @@ package com.projects.oleg.viewtotextureconverter;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -59,45 +60,25 @@ public class StereoViewActivity extends CardboardActivity {
     public void setContentViews(View[] content){
         cardboardView = (CardboardView) findViewById(R.id.cardboard_view);
         cardboardView.setNeckModelEnabled(true);
+        cardboardView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if(event.getAction() == MotionEvent.ACTION_UP){
+                    if(listener != null){
+                        listener.onMagnetButtonPressed();
+                    }
+                }
+                return true;
+            }
+        });
         renderer = new MyRenderer(this, content);
         setOnMagnetButtonListener(renderer);
         cardboardView.setRenderer(renderer);
         browser.setOnBrowserStatusListener(renderer);
+        browser.setZoomListener(renderer);
         setCardboardView(cardboardView);
      }
 
-    private WebView createWebView(Context context){
-        WebView wbView = new WebView(context);
-        wbView.setWebChromeClient(new WebChromeClient() {
-        });
-        wbView.setWebViewClient(new WebViewClient() {
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return false;
-            }
-        });
-        WebSettings ws = wbView.getSettings();
-        ws.setJavaScriptEnabled(true);
-        ws.setMediaPlaybackRequiresUserGesture(false);
-        ws.setJavaScriptCanOpenWindowsAutomatically(true);
-        ws.setUseWideViewPort(true);
-        //ws.setLoadWithOverviewMode(true);
-        ws.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
-        wbView.loadUrl("https://www.youtube.com");
-        wbView.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                Utils.print("View focus has changed " + hasFocus);
-            }
-        });
-
-        wbView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
-            @Override
-            public void onSystemUiVisibilityChange(int visibility) {
-                Utils.print("System Ui visibility has changed " + visibility);
-            }
-        });
-        return  wbView;
-    }
 
     public void onPause(){
         super.onPause();

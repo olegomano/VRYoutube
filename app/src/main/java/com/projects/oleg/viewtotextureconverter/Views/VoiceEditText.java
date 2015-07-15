@@ -17,7 +17,7 @@ import java.util.ArrayList;
 /**
  * Created by momo-chan on 7/13/15.
  */
-public class VoiceEditText extends EditText implements RecognitionListener, View.OnClickListener {
+public class VoiceEditText extends EditText implements RecognitionListener, View.OnClickListener, View.OnFocusChangeListener {
     private SpeechStatusListener listener;
     private boolean voiceDetectOn = false;
     private boolean ready = false;
@@ -44,14 +44,28 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
         getSpeechRecognizer();
     }
 
-    @Override
-    public void onClick(View v) {
-        Utils.print("I am touched");
+    private void startVoice(){
         if(!voiceDetectOn){
             voiceTT.startListening(voiceIntent);
             Utils.print("staring to listen");
         }
     }
+
+    @Override
+    public void onClick(View v) {
+        Utils.print("I am touched");
+        startVoice();
+    }
+
+    private boolean first = true;
+    @Override
+    public void onFocusChange(View v, boolean hasFocus) {
+        if(hasFocus && !first){
+            startVoice();
+        }
+        first = false;
+    }
+
 
     private void getSpeechRecognizer(){
         voiceTT = SpeechRecognizer.createSpeechRecognizer(getContext());
@@ -60,11 +74,13 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
         voiceIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         voiceIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, "voice.recognition.test");
-
         voiceIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
 
+        setOnFocusChangeListener(this);
         setOnClickListener(this);
     }
+
+
 
     public void setResultListener(SpeechStatusListener listener){
         this.listener = listener;
@@ -83,7 +99,9 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
 
     @Override
     public void onBeginningOfSpeech() {
-
+        if(listener != null){
+            listener.onWordStarted();
+        }
     }
 
     @Override
@@ -98,7 +116,9 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
 
     @Override
     public void onEndOfSpeech() {
-
+        if(listener != null){
+            listener.onWordEnded();
+        }
     }
 
     @Override
@@ -140,6 +160,8 @@ public class VoiceEditText extends EditText implements RecognitionListener, View
     public interface SpeechStatusListener{
         public void onRecognitionStarted();
         public void onRecognitionEnded();
+        public void onWordStarted();
+        public void onWordEnded();
         public void onSpeechResult(String result);
     }
 }

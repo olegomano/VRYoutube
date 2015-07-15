@@ -85,6 +85,17 @@ public class Plane extends Transform {
         return bounds;
     }
 
+    public boolean shouldCull(Camera camera){
+        float[] bounds = getBounds();
+        for(int i = 0; i < 4; i++){
+            float angle = Utils.dotProduct(camera.getForward(),0,bounds,i*4) / Utils.getMagnitude(bounds,i*4);
+            if(angle <= 0){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void setRayTraceStatusListener(OnRayTraceStatusListener listener){
         this.listener = listener;
     }
