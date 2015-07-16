@@ -57,7 +57,16 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private RayTraceResults contentPlaneResults = new RayTraceResults();
     private RayTraceResults regularPlaneResults = new RayTraceResults();
 
-    private float distance = 16;
+    private float startDistance = 14;
+    private float distance = startDistance;
+
+    private float[] previousEulerAngles = new float[3];
+    private float[] currEulerAngles = new float[3];
+    private boolean signifantMotion = true;
+    private long lastSignificantMotion;
+    private boolean hideCursor = false;
+    private long cursorHideTime = 2500000000L;
+
 
     public MyRenderer(Context context, View[] content){
         super();
@@ -103,7 +112,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
     @Override
     public void onZoomChanged(float dz) {
-        if(voiceButton.getOrigin()[3] <= camera.getPerspective()[0] + 4f){
+        if(distance <= startDistance/1.5f && dz > 0){
             return;
         }
         distance+=(.35f*-dz);
@@ -163,6 +172,8 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
                 regularPlaneResults.retPlane.onClick(regularPlaneResults);
             }
         }
+        lastSignificantMotion = System.nanoTime();
+        hideCursor = false;
     }
 
 
@@ -192,6 +203,27 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             }
         }
 
+        headTransform.getEulerAngles(currEulerAngles,0);
+        float curMag = currEulerAngles[0]*currEulerAngles[0] + currEulerAngles[1]*currEulerAngles[1] + currEulerAngles[2]*currEulerAngles[2];
+        float prevMag = previousEulerAngles[0]*previousEulerAngles[0] + previousEulerAngles[1]*previousEulerAngles[1] + previousEulerAngles[2]*previousEulerAngles[2];
+        float dA = (curMag- prevMag)*(curMag - prevMag);
+        float[] dEA = {currEulerAngles[0] - previousEulerAngles[0],currEulerAngles[1] - previousEulerAngles[1], currEulerAngles[2] - previousEulerAngles[2],0};
+        float dEAMag = Utils.getMagnitude(dEA);
+        Utils.print("Change in angles is");
+        //Utils.printVec(dEA);
+        Utils.print("Change in headmotion is " + dEAMag);
+
+        if( dEAMag > .01 ){
+            lastSignificantMotion = System.nanoTime();
+            hideCursor  = false;
+            Utils.print("There was a significant motion");
+        }
+        if(((System.nanoTime() - lastSignificantMotion) > cursorHideTime)){
+            hideCursor = true;
+            Utils.print("hiding cursor");
+        }
+        headTransform.getEulerAngles(previousEulerAngles, 0);
+
     }
 
     private void resetFrame(){
@@ -212,6 +244,14 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         eyeCamera.copyFrom(camera);
         eyeCamera.setRatio((float) eye.getViewport().height / (float) eye.getViewport().width);
+
+        if(eye.getType() == Eye.Type.LEFT){
+            eyeCamera.setFov(eye.getFov().getLeft());
+        }else if(eye.getType() == Eye.Type.RIGHT){
+            eyeCamera.setFov(eye.getFov().getRight());
+        }
+
+
         if(stereoRendering) {
             eyeCamera.applyTransform(eye.getEyeView());
         }else{
@@ -248,7 +288,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
            scrollUp.draw(eyeCamera,null);
         }
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        cursor.draw(eyeCamera, null);
+        if(!hideCursor) {
+            cursor.draw(eyeCamera, null);
+        }
     }
 
 
@@ -333,9 +375,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     public void onSurfaceChanged(int i, int i1) {
         for(int b = 0; b < contentPlanes.length; b++){
             contentPlanes[b].setShader(ShaderManager.getManager().getShader(OES3DShader.SHADER_KEY));
-            contentPlanes[b].createDisplay(mContext,content[b],i1,i );
-            float ratio = (float) i1 / ( (float) i);
-            contentPlanes[b].scale(ratio,1,1);
+            contentPlanes[b].createDisplay(mContext,content[b],960,720);
+            float ratio = (float) 960 / ( (float) 720);
+            contentPlanes[b].scale(ratio,960,720);
         }
         cursor.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
         cursor.setTexture(TextureManager.getManager().getTexture(CURSOR_TEXTURE));

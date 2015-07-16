@@ -221,8 +221,10 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
 
     private WebView createWebView(Context context) {
         WebView wbView = new WebView(context);
+        /*
         wbView.setWebChromeClient(new WebChromeClient() {
         });
+        */
         wbView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return false;
