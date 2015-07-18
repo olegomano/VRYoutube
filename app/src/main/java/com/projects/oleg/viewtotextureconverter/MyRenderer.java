@@ -33,6 +33,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     public static final String SCROLL_DOWN_HIGHLIGHT_TEXTURE = "scroll_down_highlight_texture";
     public static final String SCROLL_UP_HIGHLIGHT_TEXTURE = "scroll_up_highlight_texture";
     public static final String LOADING_TEXTURE = "loading_texture";
+    public static final String POPUP_TEXTURE = "popup_texture";
 
     private Context mContext;
     private Vibrator vibrator;
@@ -46,14 +47,16 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private Plane voiceButton = new Plane();
     private Plane scrollUp = new Plane();
     private Plane scrollDown = new Plane();
+    private Plane notification = new Plane();
 
-    private Plane[] regPlanes = {voiceButton,scrollUp,scrollDown};
+    private Plane[] regPlanes = {voiceButton,scrollUp,scrollDown,notification};
 
     private volatile View[] content;
     private volatile VirtualDisplayPlane[] contentPlanes;
 
     private VirtualDisplayPlane centerPlane;
     private VirtualDisplayPlane[] tabs;
+
 
     private RayTraceResults contentPlaneResults = new RayTraceResults();
     private RayTraceResults regularPlaneResults = new RayTraceResults();
@@ -74,6 +77,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         mContext = context;
         this.content =  content;
         contentPlanes = new VirtualDisplayPlane[content.length];
+        notification.displace(0,0,6);
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
@@ -108,6 +112,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
             }
         });
+
     }
 
     @Override
@@ -186,7 +191,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         hideCursor = false;
     }
 
-
+    private long lastContentLook = 0;
+    private long lookThreashold = 450000000L;
+    private boolean firstLook = true;
     @Override
     public void onNewFrame(HeadTransform headTransform) {
         try {
@@ -195,6 +202,13 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             e.printStackTrace();
         }
         resetFrame();
+        if(firstLook){
+            lastContentLook = System.nanoTime();
+            firstLook = false;
+        }
+        if(System.nanoTime() - lastContentLook > lookThreashold){
+            notification.setDraw(true);
+        }
         headTransform.getHeadView(headTrackTransform, 0);
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackTransform);
@@ -205,8 +219,10 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
                  cursor.setDraw(true);
                  cursor.setParallel(contentPlaneResults.retPlane);
                  contentPlaneResults.retPlane.onOver(contentPlaneResults);
+                 lastContentLook = System.nanoTime();
              }
         }
+
         synchronized (regularPlaneResults) {
             if (cameraRayTrace(eyeCamera, regPlanes, regularPlaneResults)) {
                 regularPlaneResults.retPlane.onOver(regularPlaneResults);
@@ -238,6 +254,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
     private void resetFrame(){
         cursor.setDraw(false);
+        notification.setDraw(false);
         scrollDown.setTexture(TextureManager.getManager().getTexture(SCROLL_DOWN_TEXTURE));
         scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_TEXTURE));
     }
@@ -256,9 +273,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         eyeCamera.setRatio((float) eye.getViewport().height / (float) eye.getViewport().width);
 
         if(eye.getType() == Eye.Type.LEFT){
-            eyeCamera.setFov(eye.getFov().getLeft()*1.2f);
+            eyeCamera.setFov(eye.getFov().getLeft()*1.25f);
         }else if(eye.getType() == Eye.Type.RIGHT){
-            eyeCamera.setFov(eye.getFov().getRight()*1.2f);
+            eyeCamera.setFov(eye.getFov().getRight()*1.25f);
         }
 
 
@@ -286,6 +303,8 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         if(!hideCursor) {
             cursor.draw(eyeCamera, null);
         }
+        notification.draw(camera,null);
+
     }
 
 
@@ -320,16 +339,12 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private float[] nOrigin = new float[3];
     @Override
     public void onVideoStarted() {
-        nOrigin[0] = centerPlane.getOrigin()[0];
-        nOrigin[1] = 0;
-        nOrigin[2] = centerPlane.getOrigin()[1];
+
     }
 
     @Override
     public void onVideoEnded() {
-        nOrigin[0] = centerPlane.getOrigin()[0];
-        nOrigin[1] = 1.5f;
-        nOrigin[2] = centerPlane.getOrigin()[1];
+
     }
 
 
@@ -398,6 +413,8 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         scrollUp.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
         scrollDown.setTexture(TextureManager.getManager().getTexture(SCROLL_DOWN_TEXTURE));
         scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_TEXTURE));
+        notification.setTexture(TextureManager.getManager().getTexture(POPUP_TEXTURE));
+        notification.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
         cursor.scale(.225f, .225f, 1);
         positionTabs(distance);
         Utils.print("Cam origin: ");
@@ -418,6 +435,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         TextureManager.getManager().createTextureFromReasource(R.drawable.scrolluphighlight,SCROLL_UP_HIGHLIGHT_TEXTURE);
         TextureManager.getManager().createTextureFromReasource(R.drawable.mictalk, MIC_TALK_TEXTURE);
         TextureManager.getManager().createTextureFromReasource(R.drawable.loading,LOADING_TEXTURE);
+        TextureManager.getManager().createTextureFromReasource(R.drawable.popup,POPUP_TEXTURE);
     }
 
     @Override
