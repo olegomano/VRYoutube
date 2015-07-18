@@ -32,6 +32,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     public static final String SCROLL_DOWN_TEXTURE = "scroll_down_texture";
     public static final String SCROLL_DOWN_HIGHLIGHT_TEXTURE = "scroll_down_highlight_texture";
     public static final String SCROLL_UP_HIGHLIGHT_TEXTURE = "scroll_up_highlight_texture";
+    public static final String LOADING_TEXTURE = "loading_texture";
 
     private Context mContext;
     private Vibrator vibrator;
@@ -57,12 +58,11 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private RayTraceResults contentPlaneResults = new RayTraceResults();
     private RayTraceResults regularPlaneResults = new RayTraceResults();
 
-    private float startDistance = 14;
+    private float startDistance = 12.3f;
     private float distance = startDistance;
 
     private float[] previousEulerAngles = new float[3];
     private float[] currEulerAngles = new float[3];
-    private boolean signifantMotion = true;
     private long lastSignificantMotion;
     private boolean hideCursor = false;
     private long cursorHideTime = 2500000000L;
@@ -97,7 +97,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         scrollUp.setRayTraceStatusListener(new Plane.OnRayTraceStatusListener() {
             @Override
             public void onOver(RayTraceResults results) {
-                if(centerPlane.getContent() != null) {
+                if (centerPlane.getContent() != null) {
                     centerPlane.getContent().scrollBy(0, -10);
                     scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_HIGHLIGHT_TEXTURE));
                 }
@@ -112,7 +112,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
     @Override
     public void onZoomChanged(float dz) {
-        if(distance <= startDistance/1.5f && dz > 0){
+        if(distance <= startDistance/1.31f && dz > 0){
             return;
         }
         distance+=(.35f*-dz);
@@ -143,13 +143,15 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             contentPlanes[i].displace(0, 0, distance);
          //   contentPlanes[i].scale(9.0f/9.0f,9.0f/16.0f,1);
         }
-        centerPlane.scale(centerScale,centerScale,1);
-        voiceButton.scale(.45f,.45f,1);
+        centerPlane.scale(centerScale, centerScale, 1);
+        voiceButton.scale(.45f, .45f, 1);
         voiceButton.displace(0, 0, distance / 5.0f);
-        scrollUp.displace(0, centerPlane.getHeight() / 1.9f, distance * .85f);
-        scrollDown.displace(0, -centerPlane.getHeight() / 1.9f, distance * .85f);
+
         scrollUp.scale(.6f,.6f,1);
-        scrollDown.scale(.6f,.6f,1);
+        scrollDown.scale(.6f, .6f, 1);
+
+        scrollUp.displace(scrollUp.getWidth()/2, centerPlane.getOrigin()[1]  + centerPlane.getHeight() / 2.65f, distance * .85f);
+        scrollDown.displace(-scrollUp.getWidth()/2, centerPlane.getOrigin()[1] + centerPlane.getHeight() / 2.65f, distance * .85f);
         float[] lookAt = {0,0,-3.5f,0};
         scrollDown.lookAt(lookAt, camera.getDown());
         scrollUp.lookAt(lookAt, camera.getDown());
@@ -157,14 +159,22 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         voiceButton.setDraw(false);
     }
 
-
+    private long lastButtonPressTime = 0;
+    private long dcThreashold = 1500000000L;
     @Override
-    public void onMagnetButtonPressed() {
+    public void onMagnetButtonPressed(CardboardView cardboardView) {
         vibrator.vibrate(200);
         synchronized (contentPlaneResults) {
             if (contentPlaneResults.retPlane != null) {
                 ( ( VirtualDisplayPlane ) (contentPlaneResults.retPlane) ).dispatchTouchEvent(contentPlaneResults.coordsPlaneSpace[0], contentPlaneResults.coordsPlaneSpace[1]);
                 contentPlaneResults.retPlane.onClick(contentPlaneResults);
+            }else{
+                if(System.nanoTime() - lastButtonPressTime < dcThreashold){
+                    cardboardView.resetHeadTracker();
+                    lastButtonPressTime = 0;
+                }else {
+                    lastButtonPressTime = System.nanoTime();
+                }
             }
         }
         synchronized (regularPlaneResults){
@@ -246,9 +256,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         eyeCamera.setRatio((float) eye.getViewport().height / (float) eye.getViewport().width);
 
         if(eye.getType() == Eye.Type.LEFT){
-            eyeCamera.setFov(eye.getFov().getLeft());
+            eyeCamera.setFov(eye.getFov().getLeft()*1.2f);
         }else if(eye.getType() == Eye.Type.RIGHT){
-            eyeCamera.setFov(eye.getFov().getRight());
+            eyeCamera.setFov(eye.getFov().getRight()*1.2f);
         }
 
 
@@ -257,21 +267,6 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         }else{
             eyeCamera.applyTransform(headTrackTransform);
         }
-        /*
-        for(int i = 0; i < contentPlanes.length; i++) {
-            float[] bounds = contentPlanes[i].getBounds();
-            boolean skip = false;
-            for (int b = 0; b < 4 && !skip; b++) {
-                float dotProduct = Utils.dotProduct(bounds, b * 4, eyeCamera.getForward(), 0) / Utils.getMagnitude(bounds, b * 4);
-                if (dotProduct <= .00005f) {
-                    skip = true;
-                }
-            }
-            if (!skip) {
-                contentPlanes[i].draw(eyeCamera, null);
-            }
-        }
-        */
         for(int i = 0; i < contentPlanes.length; i++){
             if(!contentPlanes[i].shouldCull(eyeCamera)){
                 contentPlanes[i].draw(eyeCamera,null);
@@ -320,6 +315,21 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         synchronized (voiceButton){
             voiceButton.setTexture(TextureManager.getManager().getTexture(MIC_TEXTURE));
         }
+    }
+
+    private float[] nOrigin = new float[3];
+    @Override
+    public void onVideoStarted() {
+        nOrigin[0] = centerPlane.getOrigin()[0];
+        nOrigin[1] = 0;
+        nOrigin[2] = centerPlane.getOrigin()[1];
+    }
+
+    @Override
+    public void onVideoEnded() {
+        nOrigin[0] = centerPlane.getOrigin()[0];
+        nOrigin[1] = 1.5f;
+        nOrigin[2] = centerPlane.getOrigin()[1];
     }
 
 
@@ -378,6 +388,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             contentPlanes[b].createDisplay(mContext,content[b],960,720);
             float ratio = (float) 960 / ( (float) 720);
             contentPlanes[b].scale(ratio,960,720);
+            contentPlanes[b].setLoadTxt();
         }
         cursor.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
         cursor.setTexture(TextureManager.getManager().getTexture(CURSOR_TEXTURE));
@@ -406,6 +417,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         TextureManager.getManager().createTextureFromReasource(R.drawable.scrolldownhighlight,SCROLL_DOWN_HIGHLIGHT_TEXTURE);
         TextureManager.getManager().createTextureFromReasource(R.drawable.scrolluphighlight,SCROLL_UP_HIGHLIGHT_TEXTURE);
         TextureManager.getManager().createTextureFromReasource(R.drawable.mictalk, MIC_TALK_TEXTURE);
+        TextureManager.getManager().createTextureFromReasource(R.drawable.loading,LOADING_TEXTURE);
     }
 
     @Override
@@ -470,6 +482,4 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             Utils.printMat(contentPlanes[i].getBounds());
         }
     }
-
-
 }

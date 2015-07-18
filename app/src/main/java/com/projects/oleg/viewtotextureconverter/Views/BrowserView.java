@@ -12,6 +12,7 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.ZoomButtonsController;
 
 /**
@@ -70,12 +71,27 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         //this.setOrientation(VERTICAL);
         createTopBar(.14f);
         createWebView(.86f);
+
         addView(wbViewParent);
-        addView(topBarParent);
+
+
+        TextView txt = new TextView(getContext());
+        txt.setId(2);
+        txt.setBackgroundColor(Color.BLACK);
+
+        LayoutParams txtparams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,dpToPix(45));
+        txtparams.addRule(RelativeLayout.ALIGN_PARENT_TOP);
+        addView(txt,txtparams);
+
+        LayoutParams mParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dpToPix(40));
+        mParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM);
+        addView(topBarParent, mParams);
+
     }
 
     private void createTopBar(float weight) {
         topBarParent = new LinearLayout(getContext());
+        topBarParent.setId(1);
         topBarParent.setOrientation(LinearLayout.HORIZONTAL);
         LinearLayout.LayoutParams topBarParentParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
         topBarParentParams.height = dpToPix(44);
@@ -107,14 +123,13 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         searchBar.setLayoutParams(searchParams);
 
 
-
         topBarParent.addView(back);
         topBarParent.addView(searchBar);
         createZoomControlls(.10f);
         topBarParent.addView(zoomCntrlParent);
 
         searchBar.setBackgroundColor(Color.argb(255, 120, 120, 217));
-        topBarParent.setBackgroundColor(Color.argb(255, 23, 23, 170));
+        this.topBarParent.setBackgroundColor(Color.argb(255, 23, 23, 170));
 
         searchBar.setHint("Click here to voice search");
         searchBar.setHintTextColor(Color.argb(255,17,17,131));
@@ -227,6 +242,13 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         */
         wbView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if(listener != null) {
+                    if (url.contains("watch?v=")) {
+                        listener.onVideoStarted();
+                    } else {
+                        listener.onVideoEnded();
+                    }
+                }
                 return false;
             }
         });
@@ -279,6 +301,8 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         public void onRecognitoinEnded();
         public void onWordStarted();
         public void onWordEnded();
+        public void onVideoStarted();
+        public void onVideoEnded();
     }
 
     public interface ZoomListener{

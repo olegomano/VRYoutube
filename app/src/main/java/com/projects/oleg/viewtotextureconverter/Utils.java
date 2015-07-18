@@ -25,7 +25,7 @@ public class Utils {
 
     public static void print(String tag, Object object){
         if(object != null){
-            Log.d(tag, object.toString());
+        //    Log.d(tag, object.toString());
         }
     }
 

@@ -15,6 +15,7 @@ import android.view.Surface;
 import android.view.View;
 import android.webkit.WebView;
 
+import com.projects.oleg.viewtotextureconverter.MyRenderer;
 import com.projects.oleg.viewtotextureconverter.Rendering.Camera;
 import com.projects.oleg.viewtotextureconverter.Shader.Bitmap3DShader;
 import com.projects.oleg.viewtotextureconverter.Shader.OES3DShader;
@@ -69,6 +70,7 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
                 synchronized (this) {
                     displayCreated = true;
                 }
+                setContentTxt();
             }
         } , 15000);
     }
@@ -99,7 +101,7 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
 
     public void setLoadTxt(){
         setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
-        setTexture(TextureManager.getManager().getErrorTexture());
+        setTexture(TextureManager.getManager().getTexture(MyRenderer.LOADING_TEXTURE));
     }
 
     public void setContentTxt(){

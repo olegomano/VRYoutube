@@ -35,7 +35,7 @@ public class StereoViewActivity extends CardboardActivity {
             @Override
             public void onCardboardTrigger() {
                 if (listener != null) {
-                    listener.onMagnetButtonPressed();
+                    listener.onMagnetButtonPressed(cardboardView);
                 }
             }
         });
@@ -65,7 +65,7 @@ public class StereoViewActivity extends CardboardActivity {
             public boolean onTouch(View v, MotionEvent event) {
                 if(event.getAction() == MotionEvent.ACTION_UP){
                     if(listener != null){
-                        listener.onMagnetButtonPressed();
+                        listener.onMagnetButtonPressed(cardboardView);
                     }
                 }
                 return true;
@@ -95,7 +95,7 @@ public class StereoViewActivity extends CardboardActivity {
     }
 
     public interface OnMagnetButtonPressedListener{
-        public void onMagnetButtonPressed();
+        public void onMagnetButtonPressed(CardboardView view);
     }
 
 
