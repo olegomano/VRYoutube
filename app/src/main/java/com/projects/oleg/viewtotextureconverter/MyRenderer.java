@@ -38,10 +38,14 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private Context mContext;
     private Vibrator vibrator;
 
+
+
     private Camera camera = new Camera();
     private Camera eyeCamera = new Camera();
     private float[] headTrackTransform = new float[16];
-    private volatile boolean stereoRendering = true;
+    private float[] headTrackDefault = new float[16];
+    private float[] headTrackDifference = new float[16];
+    private volatile boolean stereoRendering = false;
 
     private Plane cursor = new Plane();
     private Plane voiceButton = new Plane();
@@ -61,7 +65,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private RayTraceResults contentPlaneResults = new RayTraceResults();
     private RayTraceResults regularPlaneResults = new RayTraceResults();
 
-    private float startDistance = 12.3f;
+    private float startDistance = 36f;
     private float distance = startDistance;
 
     private float[] previousEulerAngles = new float[3];
@@ -77,11 +81,13 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         mContext = context;
         this.content =  content;
         contentPlanes = new VirtualDisplayPlane[content.length];
+        Matrix.setIdentityM(headTrackDefault,0);
         notification.displace(0,0,6);
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i] = new VirtualDisplayPlane();
         }
         centerPlane = contentPlanes[0];
+
         scrollDown.setRayTraceStatusListener(new Plane.OnRayTraceStatusListener() {
             @Override
             public void onOver(RayTraceResults results) {
@@ -117,10 +123,10 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
     @Override
     public void onZoomChanged(float dz) {
-        if(distance <= startDistance/1.31f && dz > 0){
+        if(distance <= startDistance/1.28f && dz > 0){
             return;
         }
-        distance+=(.35f*-dz);
+        distance+=(.65f*-dz);
         positionTabs(distance);
     }
 
@@ -143,7 +149,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         voiceButton.setOrigin(origin);
         voiceButton.setScale(1,1,1);
 
-        float centerScale = 5.785f;
+        float centerScale = 11.485f;
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i].displace(0, 0, distance);
          //   contentPlanes[i].scale(9.0f/9.0f,9.0f/16.0f,1);
@@ -175,8 +181,11 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
                 contentPlaneResults.retPlane.onClick(contentPlaneResults);
             }else{
                 if(System.nanoTime() - lastButtonPressTime < dcThreashold){
-                    cardboardView.resetHeadTracker();
-                    lastButtonPressTime = 0;
+                    synchronized (headTrackTransform) {
+                        //cardboardView.resetHeadTracker();
+                        lastButtonPressTime = 0;
+                        System.arraycopy(headTrackTransform,0,headTrackDefault,0,16);
+                    }
                 }else {
                     lastButtonPressTime = System.nanoTime();
                 }
@@ -209,9 +218,14 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         if(System.nanoTime() - lastContentLook > lookThreashold){
             notification.setDraw(true);
         }
-        headTransform.getHeadView(headTrackTransform, 0);
+        synchronized (headTrackTransform) {
+            headTransform.getHeadView(headTrackTransform, 0);
+            float[] defaultInverse = new float[16];            // T = -D * H;
+            Matrix.invertM(defaultInverse, 0, headTrackDefault, 0);
+            Matrix.multiplyMM(headTrackDifference, 0, headTrackTransform, 0, defaultInverse, 0);
+        }
         eyeCamera.copyFrom(camera);
-        eyeCamera.applyTransform(headTrackTransform);
+        eyeCamera.applyTransform(headTrackDifference);
         synchronized (contentPlaneResults) {
              if(cameraRayTrace(eyeCamera, contentPlanes, contentPlaneResults)){
                  cursor.setOrigin(contentPlaneResults.coordsWorldSpace);
@@ -272,18 +286,22 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         eyeCamera.copyFrom(camera);
         eyeCamera.setRatio((float) eye.getViewport().height / (float) eye.getViewport().width);
 
+
         if(eye.getType() == Eye.Type.LEFT){
-            eyeCamera.setFov(eye.getFov().getLeft()*1.25f);
+          //  eyeCamera.setFov(eye.getFov().getLeft());
         }else if(eye.getType() == Eye.Type.RIGHT){
-            eyeCamera.setFov(eye.getFov().getRight()*1.25f);
+          //  eyeCamera.setFov(eye.getFov().getRight());
         }
 
 
         if(stereoRendering) {
             eyeCamera.applyTransform(eye.getEyeView());
         }else{
-            eyeCamera.applyTransform(headTrackTransform);
+            eyeCamera.applyTransform(headTrackDifference);
+            float[] origin = {0,0,0,1};
+            eyeCamera.setOrigin(origin);
         }
+
         for(int i = 0; i < contentPlanes.length; i++){
             if(!contentPlanes[i].shouldCull(eyeCamera)){
                 contentPlanes[i].draw(eyeCamera,null);

@@ -11,21 +11,23 @@ import java.nio.ShortBuffer;
  * Created by momo-chan on 7/1/15.
  */
 public class Utils {
+    private static boolean DEBUG = false;
+
     public static void print(String object){
-        if(object != null){
+        if(object != null && DEBUG){
             Log.d("Utils",object.toString());
         }
     }
 
     public static void printError(String errCode){
-        if(errCode != null){
-            Log.e("Utils", errCode);
+        if(errCode != null && DEBUG){
+        //    Log.e("Utils", errCode);
         }
     }
 
     public static void print(String tag, Object object){
-        if(object != null){
-        //    Log.d(tag, object.toString());
+        if(object != null && DEBUG){
+            Log.d(tag, object.toString());
         }
     }
 
