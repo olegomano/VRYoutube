@@ -83,9 +83,11 @@ public class StereoViewActivity extends CardboardActivity {
     public void onPause(){
         super.onPause();
         if(buttonDetector != null){
+            if(browser != null){
+                browser.clearView();
+            }
             buttonDetector.stop();
         }
-        finish();
     }
 
     public void onResume(){

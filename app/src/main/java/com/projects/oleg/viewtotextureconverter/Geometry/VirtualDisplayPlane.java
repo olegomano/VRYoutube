@@ -13,6 +13,7 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.WebView;
 
 import com.projects.oleg.viewtotextureconverter.MyRenderer;
@@ -45,6 +46,8 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
     private volatile boolean displayCreated = false;
     private volatile boolean textureUpdated = false;
 
+    private DisplayStatusListener listener;
+
     public void createDisplay(final Context context, final View content, int w, int h){
         textureName+=++virtualDisplayCount;
 
@@ -65,17 +68,30 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
             @Override
             public void run() {
                 presentation = new Presentation(context, display.getDisplay());
+                if(contentView.getParent() != null) {
+                    ((ViewGroup) (contentView.getParent())).removeView(contentView);
+                }
                 presentation.setContentView(content);
                 presentation.show();
                 synchronized (this) {
                     displayCreated = true;
                 }
                 setContentTxt();
+                contentView.postInvalidate();
+                presentation.onContentChanged();
+                if(listener != null){
+                    listener.onDisplayCreated();
+                }
+
             }
-        } , 15000);
+        } , 7000);
     }
 
-    public void dispatchTouchEvent(final float x, final float y){
+    public void setListener(DisplayStatusListener l){
+        listener = l;
+    }
+
+    public void click(final float x, final float y){
         if(contentView != null){
             uiThread.post(new Runnable() {
                 @Override
@@ -145,11 +161,6 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
         other.contentView = mView;
         other.textureName = mTextureName;
         other.surfaceTexture.setOnFrameAvailableListener(other);
-
-
-
-
-
     }
 
     public void draw(Camera camera, float[] parent){
@@ -160,6 +171,21 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
             }
         }
         super.draw(camera,parent);
+    }
+
+    public void destroy(){
+        presentation.dismiss();
+        surface.release();
+        surfaceTexture.release();
+        display.release();
+        if(contentView != null) {
+            contentView.destroyDrawingCache();
+        }
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -177,4 +203,9 @@ public class VirtualDisplayPlane extends Plane implements SurfaceTexture.OnFrame
         return textureName;
     }
 
+
+    public interface DisplayStatusListener{
+        public void onDisplayCreated();
+        public void onDisplayDestroyed();
+    }
 }

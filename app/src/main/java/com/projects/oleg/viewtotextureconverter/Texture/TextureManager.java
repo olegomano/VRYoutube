@@ -11,6 +11,8 @@ import com.projects.oleg.viewtotextureconverter.R;
 import com.projects.oleg.viewtotextureconverter.Utils;
 
 import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by momo-chan on 7/2/15.
@@ -119,6 +121,16 @@ public class TextureManager {
         Utils.print("Created new OES texture " + newTexture.getId());
 
         return newTexture;
+    }
+
+    public void deleteTextures(){
+        Set<String> values = textures.keySet();
+        int[] textureList = new int[values.size()];
+        int count = 0;
+        for(String s : values){
+            textureList[count++] = textures.get(s).getId();
+        }
+        GLES20.glDeleteTextures(textureList.length,textureList,0);
     }
 
 

@@ -5,6 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.os.Vibrator;
 import android.view.View;
+import android.webkit.WebView;
 
 import com.google.vrtoolkit.cardboard.CardboardView;
 import com.google.vrtoolkit.cardboard.Eye;
@@ -24,7 +25,7 @@ import javax.microedition.khronos.egl.EGLConfig;
 /**
  * Created by momo-chan on 7/1/15.
  */
-public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActivity.OnMagnetButtonPressedListener, BrowserView.BrowserStatusListener, BrowserView.ZoomListener {
+public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActivity.OnMagnetButtonPressedListener, BrowserView.BrowserStatusListener, BrowserView.ZoomListener, VirtualDisplayPlane.DisplayStatusListener {
     public static final String CURSOR_TEXTURE = "cursor";
     public static final String MIC_TEXTURE = "mic";
     public static final String MIC_TALK_TEXTURE = "mic_talk";
@@ -90,7 +91,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             contentPlanes[i] = new VirtualDisplayPlane();
         }
         centerPlane = contentPlanes[0];
-
+        centerPlane.setListener(this);
         scrollDown.setRayTraceStatusListener(new Plane.OnRayTraceStatusListener() {
             @Override
             public void onOver(RayTraceResults results) {
@@ -158,11 +159,11 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
          //   contentPlanes[i].scale(9.0f/9.0f,9.0f/16.0f,1);
         }
         centerPlane.scale(centerScale, centerScale, 1);
-        voiceButton.scale(centerScale / 5.0f, centerScale/5.0f, 1);
+        voiceButton.scale(centerScale / 5.0f, centerScale / 5.0f, 1);
         voiceButton.displace(0, 0, distance / 1.3f);
 
         scrollUp.scale(centerScale/8.4f,centerScale/8.4f,1);
-        scrollDown.scale(centerScale/8.4f, centerScale/8.4f, 1);
+        scrollDown.scale(centerScale / 8.4f, centerScale / 8.4f, 1);
 
         scrollUp.displace(scrollUp.getWidth()/1.5f, centerPlane.getOrigin()[1]  + centerPlane.getHeight() / 2.45f, distance - 1);
         scrollDown.displace(-scrollUp.getWidth()/1.5f, centerPlane.getOrigin()[1] + centerPlane.getHeight() / 2.45f, distance - 1);
@@ -178,7 +179,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         vibrator.vibrate(200);
         synchronized (contentPlaneResults) {
             if (contentPlaneResults.retPlane != null) {
-                ( ( VirtualDisplayPlane ) (contentPlaneResults.retPlane) ).dispatchTouchEvent(contentPlaneResults.coordsPlaneSpace[0], contentPlaneResults.coordsPlaneSpace[1]);
+                ( ( VirtualDisplayPlane ) (contentPlaneResults.retPlane) ).click(contentPlaneResults.coordsPlaneSpace[0], contentPlaneResults.coordsPlaneSpace[1]);
                 contentPlaneResults.retPlane.onClick(contentPlaneResults);
             }else{
               synchronized (headTrackTransform) {
@@ -454,6 +455,19 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
     @Override
     public void onRendererShutdown() {
+        TextureManager.getManager().deleteTextures();
+        for(int i = 0; i < contentPlanes.length; i++){
+            contentPlanes[i].destroy();
+        }
+    }
+
+    @Override
+    public void onDisplayCreated() {
+        ( (BrowserView)(centerPlane.getContent()) ).loadHomePage();
+    }
+
+    @Override
+    public void onDisplayDestroyed() {
 
     }
 

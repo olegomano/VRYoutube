@@ -162,6 +162,10 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         });
     }
 
+    public void clearView(){
+        wbView.loadUrl("about:blank");
+    }
+
     private void createZoomControlls(float weight){
         zoomCntrlParent = new LinearLayout(getContext());
         LinearLayout.LayoutParams zoomCntlrParentParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT);
@@ -242,7 +246,7 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         */
         wbView.setWebViewClient(new WebViewClient() {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if(listener != null) {
+                if (listener != null) {
                     if (url.contains("watch?v=")) {
                         listener.onVideoStarted();
                     } else {
@@ -259,8 +263,11 @@ public class BrowserView extends RelativeLayout implements VoiceEditText.SpeechS
         ws.setUseWideViewPort(true);
         //ws.setLoadWithOverviewMode(true);
         ws.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.SINGLE_COLUMN);
-        wbView.loadUrl("https://www.youtube.com");
         return wbView;
+    }
+
+    public void loadHomePage(){
+        wbView.loadUrl("https://www.youtube.com");
     }
 
     @Override
