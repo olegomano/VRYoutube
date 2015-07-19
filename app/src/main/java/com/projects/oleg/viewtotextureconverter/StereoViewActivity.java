@@ -85,6 +85,7 @@ public class StereoViewActivity extends CardboardActivity {
         if(buttonDetector != null){
             buttonDetector.stop();
         }
+        finish();
     }
 
     public void onResume(){

@@ -65,7 +65,10 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
     private RayTraceResults contentPlaneResults = new RayTraceResults();
     private RayTraceResults regularPlaneResults = new RayTraceResults();
 
-    private float startDistance = 36f;
+    private float minDistance = 65;
+    private float startDistance = 95f;
+    private float maxDistance = 100;
+
     private float distance = startDistance;
 
     private float[] previousEulerAngles = new float[3];
@@ -123,10 +126,10 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
 
     @Override
     public void onZoomChanged(float dz) {
-        if(distance <= startDistance/1.28f && dz > 0){
+        if(distance <= startDistance/1.32f && dz > 0){
             return;
         }
-        distance+=(.65f*-dz);
+        distance+=(3.0f*-dz);
         positionTabs(distance);
     }
 
@@ -149,20 +152,20 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         voiceButton.setOrigin(origin);
         voiceButton.setScale(1,1,1);
 
-        float centerScale = 11.485f;
+        float centerScale =45.485f;
         for(int i = 0; i < contentPlanes.length; i++){
             contentPlanes[i].displace(0, 0, distance);
          //   contentPlanes[i].scale(9.0f/9.0f,9.0f/16.0f,1);
         }
         centerPlane.scale(centerScale, centerScale, 1);
-        voiceButton.scale(.45f, .45f, 1);
-        voiceButton.displace(0, 0, distance / 5.0f);
+        voiceButton.scale(centerScale / 5.0f, centerScale/5.0f, 1);
+        voiceButton.displace(0, 0, distance / 1.3f);
 
-        scrollUp.scale(.6f,.6f,1);
-        scrollDown.scale(.6f, .6f, 1);
+        scrollUp.scale(centerScale/8.4f,centerScale/8.4f,1);
+        scrollDown.scale(centerScale/8.4f, centerScale/8.4f, 1);
 
-        scrollUp.displace(scrollUp.getWidth()/2, centerPlane.getOrigin()[1]  + centerPlane.getHeight() / 2.65f, distance * .85f);
-        scrollDown.displace(-scrollUp.getWidth()/2, centerPlane.getOrigin()[1] + centerPlane.getHeight() / 2.65f, distance * .85f);
+        scrollUp.displace(scrollUp.getWidth()/1.5f, centerPlane.getOrigin()[1]  + centerPlane.getHeight() / 2.45f, distance - 1);
+        scrollDown.displace(-scrollUp.getWidth()/1.5f, centerPlane.getOrigin()[1] + centerPlane.getHeight() / 2.45f, distance - 1);
         float[] lookAt = {0,0,-3.5f,0};
         scrollDown.lookAt(lookAt, camera.getDown());
         scrollUp.lookAt(lookAt, camera.getDown());
@@ -170,8 +173,6 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         voiceButton.setDraw(false);
     }
 
-    private long lastButtonPressTime = 0;
-    private long dcThreashold = 1500000000L;
     @Override
     public void onMagnetButtonPressed(CardboardView cardboardView) {
         vibrator.vibrate(200);
@@ -180,15 +181,9 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
                 ( ( VirtualDisplayPlane ) (contentPlaneResults.retPlane) ).dispatchTouchEvent(contentPlaneResults.coordsPlaneSpace[0], contentPlaneResults.coordsPlaneSpace[1]);
                 contentPlaneResults.retPlane.onClick(contentPlaneResults);
             }else{
-                if(System.nanoTime() - lastButtonPressTime < dcThreashold){
-                    synchronized (headTrackTransform) {
-                        //cardboardView.resetHeadTracker();
-                        lastButtonPressTime = 0;
-                        System.arraycopy(headTrackTransform,0,headTrackDefault,0,16);
-                    }
-                }else {
-                    lastButtonPressTime = System.nanoTime();
-                }
+              synchronized (headTrackTransform) {
+                  System.arraycopy(headTrackTransform,0,headTrackDefault,0,16);
+              }
             }
         }
         synchronized (regularPlaneResults){
@@ -223,6 +218,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
             float[] defaultInverse = new float[16];            // T = -D * H;
             Matrix.invertM(defaultInverse, 0, headTrackDefault, 0);
             Matrix.multiplyMM(headTrackDifference, 0, headTrackTransform, 0, defaultInverse, 0);
+            Matrix.scaleM(headTrackDifference,0,.025f,.025f,.025f);
         }
         eyeCamera.copyFrom(camera);
         eyeCamera.applyTransform(headTrackDifference);
@@ -253,7 +249,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         //Utils.printVec(dEA);
         Utils.print("Change in headmotion is " + dEAMag);
 
-        if( dEAMag > .01 ){
+        if( dEAMag > .019 ){
             lastSignificantMotion = System.nanoTime();
             hideCursor  = false;
             Utils.print("There was a significant motion");
@@ -433,7 +429,7 @@ public class MyRenderer implements CardboardView.StereoRenderer, StereoViewActiv
         scrollUp.setTexture(TextureManager.getManager().getTexture(SCROLL_UP_TEXTURE));
         notification.setTexture(TextureManager.getManager().getTexture(POPUP_TEXTURE));
         notification.setShader(ShaderManager.getManager().getShader(Bitmap3DShader.SHADER_KEY));
-        cursor.scale(.225f, .225f, 1);
+        cursor.scale(1.25f, 1.25f, 1);
         positionTabs(distance);
         Utils.print("Cam origin: ");
         Utils.printVec(camera.getOrigin());
